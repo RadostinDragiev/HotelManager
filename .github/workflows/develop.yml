@@ -25,6 +25,7 @@ jobs:
       - name: Run Maven Tests
         run: mvn test
   Analysis:
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
