@@ -6,12 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  assign:
+  add-reviewers:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Auto-assign
-        uses: kentaro-m/auto-assign-action@v2.0.0
-        with:
-          repo-token: ${{ secrets.GH_TOKEN }}
-          configuration-path: .github/auto_assign.yml
+        - uses: kentaro-m/auto-assign-action@v2.0.0
