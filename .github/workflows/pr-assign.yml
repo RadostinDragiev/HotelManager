@@ -1,0 +1,17 @@
+name: Auto Assign Pull Request
+
+on:
+  pull_request:
+    types: [opened]
+  workflow_dispatch:
+
+jobs:
+  assign:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Auto-assign
+        uses: kentaro-m/auto-assign-action@v2.0.0
+        with:
+          repo-token: ${{ secrets.GH_TOKEN }}
+          configuration-path: .github/auto_assign.yml
