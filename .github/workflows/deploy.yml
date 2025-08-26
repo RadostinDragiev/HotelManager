@@ -39,5 +39,12 @@ jobs:
           docker push $IMAGE_NAME:$VERSION
           docker push $IMAGE_NAME:latest
 
+#      - name: Trigger Render Deploy
+#        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
+
       - name: Trigger Render Deploy
-        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
+        uses: JorgeLNJunior/render-deploy@v1.4.5
+        with:
+          service_id: ${{ secrets.RENDER_SERVICE_ID }}
+          api_key: ${{ secrets.RENDER_API_KEY }}
+          wait_deploy: true
