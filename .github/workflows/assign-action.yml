@@ -3,16 +3,12 @@ name: Auto Assign Issues
 on:
   issues:
     types: [opened]
-  pull_request:
-    types: [opened]
 
 jobs:
   assign:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Auto-assign
-        uses: kentaro-m/auto-assign-action@v2.0.0
+      - name: Assign new issue
+        uses: peter-evans/assign-issue@v2
         with:
-          repo-token: ${{ secrets.GH_TOKEN }}
-          configuration-path: .github/auto_assign.yml
+          assignees: radostinDragiev
