@@ -3,6 +3,8 @@ name: Auto Assign Issues
 on:
   issues:
     types: [opened]
+  pull_request:
+    types: [opened]
 
 jobs:
   assign:
@@ -12,5 +14,5 @@ jobs:
       - name: Auto-assign
         uses: kentaro-m/auto-assign-action@v2.0.0
         with:
-          github-token: ${{ secrets.GH_TOKEN }}
-          assignees: "RadostinDragiev"
+          repo-token: ${{ secrets.GH_TOKEN }}
+          configuration-path: .github/auto_assign.yml
