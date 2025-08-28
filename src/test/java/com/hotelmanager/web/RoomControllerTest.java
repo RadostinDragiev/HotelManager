@@ -43,6 +43,17 @@ class RoomControllerTest {
                 .andExpectAll(expectValidationError("roomNumber", "Room number must be positive"));
     }
 
+    @Test
+    @DisplayName("Should return 400 if roomNumber exceeds 10 digits")
+    void testRoomNumberTooLong() throws Exception {
+        RoomCreationDto dto = buildValidRoomDto();
+        dto.setRoomNumber("12345678901"); // 11 digits
+
+        mockMvc.perform(post("/rooms")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpectAll(expectValidationError("roomNumber", "Room number must not exceed 10 digits"));
+    }
 
     @Test
     @DisplayName("Should return 400 if capacity is greater than 9 or non-positive")
