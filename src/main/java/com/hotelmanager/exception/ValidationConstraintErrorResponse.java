@@ -13,7 +13,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExceptionDetails {
+public class ValidationConstraintErrorResponse {
 
     private HttpStatus status;
 
@@ -24,7 +24,7 @@ public class ExceptionDetails {
 
     private List<FieldValidationError> fieldErrors = new ArrayList<>();
 
-    public ExceptionDetails(HttpStatus status) {
+    public ValidationConstraintErrorResponse(HttpStatus status) {
         this.status = status;
         this.timestamp = LocalDateTime.now();
     }
