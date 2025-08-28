@@ -17,7 +17,7 @@ import java.util.List;
 public class RoomCreationDto {
 
     @NotNull(message = "Room number is required")
-    @Pattern(regexp = "^[1-9][0-9]*$", message = "Room number must be a positive integer")
+    @Pattern(regexp = "^[1-9][0-9]*$", message = "Room number must be positive")
     @Size(max = 10, message = "Room number must not exceed 10 digits")
     private String roomNumber;
 
