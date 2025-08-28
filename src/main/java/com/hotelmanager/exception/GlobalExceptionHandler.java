@@ -1,31 +1,34 @@
 package com.hotelmanager.exception;
 
 import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.LocalDateTime;
+
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /**
-     * Handles EntityNotFoundException. Created to encapsulate errors with more detail than javax.persistence.EntityNotFoundException.
-     *
-     * @param ex the EntityNotFoundException
-     * @return the ApiError object
-     */
     @ExceptionHandler(EntityNotFoundException.class)
     protected ResponseEntity<?> handleEntityNotFound(EntityNotFoundException ex) {
-        ExceptionDetails apiError = new ExceptionDetails();
-        apiError.setMessage(ex.getMessage());
-        return buildResponseEntity(apiError);
+        log.error("Entity not found", ex);
+
+        ValidationConstraintErrorResponse response = new ValidationConstraintErrorResponse();
+        response.setMessage(ex.getMessage());
+        return buildResponseEntity(response);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ExceptionDetails> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        ExceptionDetails response = new ExceptionDetails(HttpStatus.BAD_REQUEST);
+    public ResponseEntity<ValidationConstraintErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        log.error("Validation error", ex);
+
+        ValidationConstraintErrorResponse response = new ValidationConstraintErrorResponse(HttpStatus.BAD_REQUEST);
         response.setMessage("Validation error");
 
         ex.getBindingResult()
@@ -35,7 +38,31 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
-    private ResponseEntity<?> buildResponseEntity(ExceptionDetails apiError) {
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        log.error("Database constraint violation: ", ex);
+
+        ExceptionErrorResponse response = new ExceptionErrorResponse();
+        response.setStatus(HttpStatus.CONFLICT);
+        response.setTimestamp(LocalDateTime.now());
+        response.setMessage("Database constraint violation");
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ExceptionErrorResponse> handleAllExceptions(Exception ex) {
+        log.error("Unhandled exception caught: ", ex);
+
+        ExceptionErrorResponse response = new ExceptionErrorResponse();
+        response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+        response.setTimestamp(LocalDateTime.now());
+        response.setMessage("Unexpected error occurred");
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    private ResponseEntity<?> buildResponseEntity(ValidationConstraintErrorResponse apiError) {
         return new ResponseEntity<>(apiError, apiError.getStatus());
     }
 }
