@@ -1,7 +1,7 @@
 package com.hotelmanager.service.impl;
 
-import com.hotelmanager.model.dto.RoomCreationDto;
-import com.hotelmanager.model.dto.RoomResponseDto;
+import com.hotelmanager.model.dto.request.RoomCreationDto;
+import com.hotelmanager.model.dto.response.RoomResponseDto;
 import com.hotelmanager.model.entity.Room;
 import com.hotelmanager.repository.RoomRepository;
 import com.hotelmanager.service.RoomService;

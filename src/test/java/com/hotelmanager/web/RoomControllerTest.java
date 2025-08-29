@@ -1,7 +1,7 @@
 package com.hotelmanager.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hotelmanager.model.dto.RoomCreationDto;
+import com.hotelmanager.model.dto.request.RoomCreationDto;
 import com.hotelmanager.model.enums.BedType;
 import com.hotelmanager.model.enums.RoomStatus;
 import com.hotelmanager.model.enums.RoomType;

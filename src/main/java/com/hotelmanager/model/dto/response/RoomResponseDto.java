@@ -1,4 +1,4 @@
-package com.hotelmanager.model.dto;
+package com.hotelmanager.model.dto.response;
 
 import com.hotelmanager.model.enums.BedType;
 import com.hotelmanager.model.enums.RoomStatus;

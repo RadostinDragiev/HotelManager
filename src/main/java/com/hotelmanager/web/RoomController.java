@@ -1,7 +1,7 @@
 package com.hotelmanager.web;
 
-import com.hotelmanager.model.dto.RoomCreationDto;
-import com.hotelmanager.model.dto.RoomResponseDto;
+import com.hotelmanager.model.dto.request.RoomCreationDto;
+import com.hotelmanager.model.dto.response.RoomResponseDto;
 import com.hotelmanager.service.RoomService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

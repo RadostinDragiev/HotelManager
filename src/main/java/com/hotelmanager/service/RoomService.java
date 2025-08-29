@@ -1,7 +1,7 @@
 package com.hotelmanager.service;
 
-import com.hotelmanager.model.dto.RoomCreationDto;
-import com.hotelmanager.model.dto.RoomResponseDto;
+import com.hotelmanager.model.dto.request.RoomCreationDto;
+import com.hotelmanager.model.dto.response.RoomResponseDto;
 
 public interface RoomService {
 
