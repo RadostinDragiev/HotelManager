@@ -1,15 +1,13 @@
 package com.hotelmanager.web;
 
 import com.hotelmanager.model.dto.request.RoomCreationDto;
+import com.hotelmanager.model.dto.request.RoomUpdateDto;
 import com.hotelmanager.model.dto.response.RoomResponseDto;
 import com.hotelmanager.service.RoomService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
@@ -28,5 +26,10 @@ public class RoomController {
                         .buildAndExpand(room.getUuid())
                         .toUri())
                 .build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<RoomResponseDto> updateRoom(@PathVariable String id, @Valid @RequestBody RoomUpdateDto roomUpdateDto) {
+        return ResponseEntity.ok(this.roomService.updateRoom(id, roomUpdateDto));
     }
 }

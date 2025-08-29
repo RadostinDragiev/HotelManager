@@ -16,12 +16,15 @@ import java.time.LocalDateTime;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
-    protected ResponseEntity<?> handleEntityNotFound(EntityNotFoundException ex) {
+    public ResponseEntity<ExceptionErrorResponse> handleEntityNotFound(EntityNotFoundException ex) {
         log.error("Entity not found", ex);
 
-        ValidationConstraintErrorResponse response = new ValidationConstraintErrorResponse();
+        ExceptionErrorResponse response = new ExceptionErrorResponse();
         response.setMessage(ex.getMessage());
-        return buildResponseEntity(response);
+        response.setTimestamp(LocalDateTime.now());
+        response.setStatus(HttpStatus.NOT_FOUND);
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -60,9 +63,5 @@ public class GlobalExceptionHandler {
         response.setMessage("Unexpected error occurred");
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-    }
-
-    private ResponseEntity<?> buildResponseEntity(ValidationConstraintErrorResponse apiError) {
-        return new ResponseEntity<>(apiError, apiError.getStatus());
     }
 }

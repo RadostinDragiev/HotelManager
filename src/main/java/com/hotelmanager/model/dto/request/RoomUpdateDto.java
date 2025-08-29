@@ -16,7 +16,7 @@ import static com.hotelmanager.validation.ValidationMessages.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RoomCreationDto {
+public class RoomUpdateDto {
 
     @NotNull(message = ROOM_NUMBER_REQUIRED)
     @Pattern(regexp = "^[1-9][0-9]*$", message = ROOM_NUMBER_POSITIVE)
