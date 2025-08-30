@@ -1,5 +1,6 @@
 package com.hotelmanager.service.impl;
 
+import com.hotelmanager.exception.exceptions.RoomNotFoundException;
 import com.hotelmanager.model.dto.request.RoomCreationDto;
 import com.hotelmanager.model.dto.request.RoomUpdateDto;
 import com.hotelmanager.model.dto.response.RoomPageResponseDto;
@@ -10,7 +11,6 @@ import com.hotelmanager.model.enums.RoomType;
 import com.hotelmanager.repository.RoomRepository;
 import com.hotelmanager.service.RoomService;
 import com.hotelmanager.validation.PageableValidator;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 import java.util.UUID;
+
+import static com.hotelmanager.exception.ExceptionMessages.ROOM_NOT_FOUND_ID;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +40,7 @@ public class RoomServiceImpl implements RoomService {
     @Override
     public RoomResponseDto updateRoom(String id, RoomUpdateDto roomUpdateDto) {
         Room existingRoom = this.roomRepository.findById(UUID.fromString(id))
-                .orElseThrow(() -> new EntityNotFoundException("Invalid room id " + id));
+                .orElseThrow(() -> new RoomNotFoundException(ROOM_NOT_FOUND_ID + id));
 
         existingRoom.setRoomNumber(roomUpdateDto.getRoomNumber());
         existingRoom.setRoomType(roomUpdateDto.getRoomType());
@@ -55,7 +57,7 @@ public class RoomServiceImpl implements RoomService {
     @Override
     public RoomResponseDto getRoomById(String id) {
         Room room = this.roomRepository.findById(UUID.fromString(id))
-                .orElseThrow(() -> new EntityNotFoundException("Invalid room id " + id));
+                .orElseThrow(() -> new RoomNotFoundException(ROOM_NOT_FOUND_ID + id));
         return this.modelMapper.map(room, RoomResponseDto.class);
     }
 
@@ -75,5 +77,13 @@ public class RoomServiceImpl implements RoomService {
         PageableValidator.validatePageRequest(rooms, pageable);
 
         return rooms.map(r -> modelMapper.map(r, RoomPageResponseDto.class));
+    }
+
+    @Override
+    public void deleteRoomById(String id) {
+        if (!this.roomRepository.existsById(UUID.fromString(id))) {
+            throw new RoomNotFoundException(ROOM_NOT_FOUND_ID + id);
+        }
+        this.roomRepository.deleteById(UUID.fromString(id));
     }
 }

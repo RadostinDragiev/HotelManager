@@ -52,4 +52,10 @@ public class RoomController {
         Pageable pageable = PageRequest.of(page, size);
         return roomService.getAllRooms(roomType, roomStatus, pageable);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteRoomById(@PathVariable String id) {
+        this.roomService.deleteRoomById(id);
+        return ResponseEntity.ok().build();
+    }
 }

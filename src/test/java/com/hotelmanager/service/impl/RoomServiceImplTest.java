@@ -1,5 +1,6 @@
 package com.hotelmanager.service.impl;
 
+import com.hotelmanager.exception.exceptions.RoomNotFoundException;
 import com.hotelmanager.model.dto.request.RoomCreationDto;
 import com.hotelmanager.model.dto.request.RoomUpdateDto;
 import com.hotelmanager.model.dto.response.RoomPageResponseDto;
@@ -9,7 +10,6 @@ import com.hotelmanager.model.enums.BedType;
 import com.hotelmanager.model.enums.RoomStatus;
 import com.hotelmanager.model.enums.RoomType;
 import com.hotelmanager.repository.RoomRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.hotelmanager.exception.ExceptionMessages.ROOM_NOT_FOUND_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
@@ -47,14 +48,14 @@ class RoomServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        room = new Room();
-        room.setRoomNumber("101");
-        room.setRoomType(RoomType.SINGLE);
-        room.setRoomStatus(RoomStatus.AVAILABLE);
+        this.room = new Room();
+        this.room.setRoomNumber("101");
+        this.room.setRoomType(RoomType.SINGLE);
+        this.room.setRoomStatus(RoomStatus.AVAILABLE);
 
-        roomResponseDto = new RoomResponseDto();
-        roomResponseDto.setUuid(RANDOM);
-        roomResponseDto.setRoomNumber("101");
+        this.roomResponseDto = new RoomResponseDto();
+        this.roomResponseDto.setUuid(RANDOM);
+        this.roomResponseDto.setRoomNumber("101");
     }
 
 
@@ -70,30 +71,30 @@ class RoomServiceImplTest {
         creationDto.setRoomStatus(RoomStatus.AVAILABLE);
 
         Room newRoom = new Room();
-        when(modelMapper.map(creationDto, Room.class)).thenReturn(newRoom);
-        when(roomRepository.save(newRoom)).thenReturn(newRoom);
+        when(this.modelMapper.map(creationDto, Room.class)).thenReturn(newRoom);
+        when(this.roomRepository.save(newRoom)).thenReturn(newRoom);
 
         RoomResponseDto responseDto = new RoomResponseDto();
-        when(modelMapper.map(newRoom, RoomResponseDto.class)).thenReturn(responseDto);
+        when(this.modelMapper.map(newRoom, RoomResponseDto.class)).thenReturn(responseDto);
 
-        RoomResponseDto result = roomService.createRoom(creationDto);
+        RoomResponseDto result = this.roomService.createRoom(creationDto);
 
         assertThat(result).isNotNull();
-        verify(modelMapper, times(1)).map(creationDto, Room.class);
-        verify(roomRepository, times(1)).save(newRoom);
-        verify(modelMapper, times(1)).map(newRoom, RoomResponseDto.class);
+        verify(this.modelMapper, times(1)).map(creationDto, Room.class);
+        verify(this.roomRepository, times(1)).save(newRoom);
+        verify(this.modelMapper, times(1)).map(newRoom, RoomResponseDto.class);
     }
 
     @Test
-    void updateRoom_shouldThrowEntityNotFound_whenRoomDoesNotExist() {
+    void updateRoom_shouldThrowRoomNotFound_whenRoomDoesNotExist() {
         String nonExistingId = UUID.randomUUID().toString();
         RoomUpdateDto updateDto = new RoomUpdateDto();
 
         when(this.roomRepository.findById(UUID.fromString(nonExistingId))).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> this.roomService.updateRoom(nonExistingId, updateDto))
-                .isInstanceOf(EntityNotFoundException.class)
-                .hasMessageContaining("Invalid room id " + nonExistingId);
+                .isInstanceOf(RoomNotFoundException.class)
+                .hasMessageContaining(ROOM_NOT_FOUND_ID + nonExistingId);
 
         verify(this.roomRepository, times(1)).findById(UUID.fromString(nonExistingId));
         verifyNoMoreInteractions(this.roomRepository);
@@ -112,45 +113,45 @@ class RoomServiceImplTest {
         updateDto.setRoomStatus(RoomStatus.AVAILABLE);
 
         Room existingRoom = new Room();
-        when(roomRepository.findById(UUID.fromString(existingId)))
+        when(this.roomRepository.findById(UUID.fromString(existingId)))
                 .thenReturn(Optional.of(existingRoom));
-        when(roomRepository.save(existingRoom)).thenReturn(existingRoom);
+        when(this.roomRepository.save(existingRoom)).thenReturn(existingRoom);
 
         RoomResponseDto responseDto = new RoomResponseDto();
-        when(modelMapper.map(existingRoom, RoomResponseDto.class))
+        when(this.modelMapper.map(existingRoom, RoomResponseDto.class))
                 .thenReturn(responseDto);
 
-        RoomResponseDto result = roomService.updateRoom(existingId, updateDto);
+        RoomResponseDto result = this.roomService.updateRoom(existingId, updateDto);
 
         assertThat(result).isNotNull();
-        verify(roomRepository, times(1))
+        verify(this.roomRepository, times(1))
                 .findById(UUID.fromString(existingId));
-        verify(roomRepository, times(1)).save(existingRoom);
-        verify(modelMapper, times(1))
+        verify(this.roomRepository, times(1)).save(existingRoom);
+        verify(this.modelMapper, times(1))
                 .map(existingRoom, RoomResponseDto.class);
     }
 
     @Test
     void getRoomById_shouldReturnRoomResponse_whenRoomExists() {
-        when(roomRepository.findById(RANDOM)).thenReturn(Optional.of(room));
-        when(modelMapper.map(room, RoomResponseDto.class)).thenReturn(roomResponseDto);
+        when(this.roomRepository.findById(RANDOM)).thenReturn(Optional.of(room));
+        when(this.modelMapper.map(room, RoomResponseDto.class)).thenReturn(roomResponseDto);
 
-        RoomResponseDto result = roomService.getRoomById(RANDOM.toString());
+        RoomResponseDto result = this.roomService.getRoomById(RANDOM.toString());
 
         assertThat(result.getUuid()).isEqualTo(RANDOM);
         assertThat(result.getRoomNumber()).isEqualTo("101");
-        verify(roomRepository).findById(RANDOM);
-        verify(modelMapper).map(room, RoomResponseDto.class);
+        verify(this.roomRepository).findById(RANDOM);
+        verify(this.modelMapper).map(room, RoomResponseDto.class);
     }
 
     @Test
-    void getRoomById_shouldThrowEntityNotFound_whenRoomDoesNotExist() {
+    void getRoomById_shouldThrowRoomNotFound_whenRoomDoesNotExist() {
         UUID fakeId = UUID.randomUUID();
-        when(roomRepository.findById(fakeId)).thenReturn(Optional.empty());
+        when(this.roomRepository.findById(fakeId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> roomService.getRoomById(fakeId.toString()))
-                .isInstanceOf(EntityNotFoundException.class)
-                .hasMessageContaining("Invalid room id " + fakeId);
+        assertThatThrownBy(() -> this.roomService.getRoomById(fakeId.toString()))
+                .isInstanceOf(RoomNotFoundException.class)
+                .hasMessageContaining(ROOM_NOT_FOUND_ID + fakeId);
     }
 
     @Test
@@ -158,13 +159,13 @@ class RoomServiceImplTest {
         Pageable pageable = PageRequest.of(0, 5, Sort.by("roomNumber"));
         Page<Room> rooms = new PageImpl<>(List.of(room));
 
-        when(roomRepository.findAll(pageable)).thenReturn(rooms);
-        when(modelMapper.map(room, RoomPageResponseDto.class)).thenReturn(new RoomPageResponseDto());
+        when(this.roomRepository.findAll(pageable)).thenReturn(rooms);
+        when(this.modelMapper.map(room, RoomPageResponseDto.class)).thenReturn(new RoomPageResponseDto());
 
-        Page<RoomPageResponseDto> result = roomService.getAllRooms(Optional.empty(), Optional.empty(), pageable);
+        Page<RoomPageResponseDto> result = this.roomService.getAllRooms(Optional.empty(), Optional.empty(), pageable);
 
         assertThat(result).hasSize(1);
-        verify(roomRepository).findAll(pageable);
+        verify(this.roomRepository).findAll(pageable);
     }
 
     @Test
@@ -172,13 +173,13 @@ class RoomServiceImplTest {
         Pageable pageable = PageRequest.of(0, 5);
         Page<Room> rooms = new PageImpl<>(List.of(room));
 
-        when(roomRepository.findByRoomType(RoomType.SINGLE, pageable)).thenReturn(rooms);
-        when(modelMapper.map(room, RoomPageResponseDto.class)).thenReturn(new RoomPageResponseDto());
+        when(this.roomRepository.findByRoomType(RoomType.SINGLE, pageable)).thenReturn(rooms);
+        when(this.modelMapper.map(room, RoomPageResponseDto.class)).thenReturn(new RoomPageResponseDto());
 
-        Page<RoomPageResponseDto> result = roomService.getAllRooms(Optional.of(RoomType.SINGLE), Optional.empty(), pageable);
+        Page<RoomPageResponseDto> result = this.roomService.getAllRooms(Optional.of(RoomType.SINGLE), Optional.empty(), pageable);
 
         assertThat(result).hasSize(1);
-        verify(roomRepository).findByRoomType(RoomType.SINGLE, pageable);
+        verify(this.roomRepository).findByRoomType(RoomType.SINGLE, pageable);
     }
 
     @Test
@@ -186,13 +187,13 @@ class RoomServiceImplTest {
         Pageable pageable = PageRequest.of(0, 5);
         Page<Room> rooms = new PageImpl<>(List.of(room));
 
-        when(roomRepository.findByRoomStatus(RoomStatus.AVAILABLE, pageable)).thenReturn(rooms);
-        when(modelMapper.map(room, RoomPageResponseDto.class)).thenReturn(new RoomPageResponseDto());
+        when(this.roomRepository.findByRoomStatus(RoomStatus.AVAILABLE, pageable)).thenReturn(rooms);
+        when(this.modelMapper.map(room, RoomPageResponseDto.class)).thenReturn(new RoomPageResponseDto());
 
-        Page<RoomPageResponseDto> result = roomService.getAllRooms(Optional.empty(), Optional.of(RoomStatus.AVAILABLE), pageable);
+        Page<RoomPageResponseDto> result = this.roomService.getAllRooms(Optional.empty(), Optional.of(RoomStatus.AVAILABLE), pageable);
 
         assertThat(result).hasSize(1);
-        verify(roomRepository).findByRoomStatus(RoomStatus.AVAILABLE, pageable);
+        verify(this.roomRepository).findByRoomStatus(RoomStatus.AVAILABLE, pageable);
     }
 
     @Test
@@ -200,12 +201,33 @@ class RoomServiceImplTest {
         Pageable pageable = PageRequest.of(0, 5);
         Page<Room> rooms = new PageImpl<>(List.of(room));
 
-        when(roomRepository.findByRoomTypeAndRoomStatus(RoomType.SINGLE, RoomStatus.AVAILABLE, pageable)).thenReturn(rooms);
-        when(modelMapper.map(room, RoomPageResponseDto.class)).thenReturn(new RoomPageResponseDto());
+        when(this.roomRepository.findByRoomTypeAndRoomStatus(RoomType.SINGLE, RoomStatus.AVAILABLE, pageable)).thenReturn(rooms);
+        when(this.modelMapper.map(room, RoomPageResponseDto.class)).thenReturn(new RoomPageResponseDto());
 
-        Page<RoomPageResponseDto> result = roomService.getAllRooms(Optional.of(RoomType.SINGLE), Optional.of(RoomStatus.AVAILABLE), pageable);
+        Page<RoomPageResponseDto> result = this.roomService.getAllRooms(Optional.of(RoomType.SINGLE), Optional.of(RoomStatus.AVAILABLE), pageable);
 
         assertThat(result).hasSize(1);
-        verify(roomRepository).findByRoomTypeAndRoomStatus(RoomType.SINGLE, RoomStatus.AVAILABLE, pageable);
+        verify(this.roomRepository).findByRoomTypeAndRoomStatus(RoomType.SINGLE, RoomStatus.AVAILABLE, pageable);
+    }
+
+    @Test
+    void deleteRoomById_shouldThrowRoomNotFound_whenRoomDoesNotExist() {
+        UUID fakeId = UUID.randomUUID();
+        when(this.roomRepository.existsById(fakeId)).thenReturn(false);
+
+        assertThatThrownBy(() -> this.roomService.deleteRoomById(fakeId.toString()))
+                .isInstanceOf(RoomNotFoundException.class)
+                .hasMessageContaining(ROOM_NOT_FOUND_ID + fakeId);
+        verify(roomRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void deleteRoomById_shouldReturnRoomResponse_whenRoomExists() {
+        UUID roomId = UUID.randomUUID();
+        when(this.roomRepository.existsById(roomId)).thenReturn(true);
+
+        this.roomService.deleteRoomById(roomId.toString());
+
+        verify(roomRepository, times(1)).deleteById(UUID.fromString(roomId.toString()));
     }
 }
