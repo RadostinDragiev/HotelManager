@@ -23,6 +23,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
+import static com.hotelmanager.exception.ExceptionMessages.ROOM_NOT_FOUND_ID;
 import static com.hotelmanager.validation.ValidationMessages.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -227,7 +228,7 @@ class RoomControllerTest extends IntegrationBaseTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value("NOT_FOUND"))
                 .andExpect(jsonPath("$.timestamp").isNotEmpty())
-                .andExpect(jsonPath("$.message").value("Invalid room id " + RANDOM_ID));
+                .andExpect(jsonPath("$.message").value(ROOM_NOT_FOUND_ID + RANDOM_ID));
     }
 
     @Test
@@ -428,7 +429,7 @@ class RoomControllerTest extends IntegrationBaseTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value("NOT_FOUND"))
                 .andExpect(jsonPath("$.timestamp").isNotEmpty())
-                .andExpect(jsonPath("$.message").value("Invalid room id " + RANDOM_ID));
+                .andExpect(jsonPath("$.message").value(ROOM_NOT_FOUND_ID + RANDOM_ID));
     }
 
     @Test
@@ -683,6 +684,27 @@ class RoomControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(get("/rooms")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpectAll(expectGetAllRooms(PAGINATION_RESULT_PREFIX, room));
+    }
+
+    @Test
+    @DisplayName("Should return 404 when delete room by missing id")
+    void testDeleteRoomByIdWithInvalidId() throws Exception {
+        this.mockMvc.perform(delete("/rooms/{id}", RANDOM_ID)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.timestamp").isNotEmpty())
+                .andExpect(jsonPath("$.message").value(ROOM_NOT_FOUND_ID + RANDOM_ID));
+    }
+
+    @Test
+    @DisplayName("Should return 200 when delete room by valid id")
+    void testDeleteRoomById() throws Exception {
+        RoomResponseDto room = this.roomService.createRoom(buildValidRoomDto());
+
+        this.mockMvc.perform(delete("/rooms/{id}", room.getUuid())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
     }
 
     private void createMultipleRooms(int count) {

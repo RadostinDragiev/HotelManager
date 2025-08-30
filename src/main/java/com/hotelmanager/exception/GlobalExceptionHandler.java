@@ -1,6 +1,7 @@
 package com.hotelmanager.exception;
 
 import com.hotelmanager.exception.exceptions.PageOutOfBoundsException;
+import com.hotelmanager.exception.exceptions.RoomNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -55,8 +56,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(PageOutOfBoundsException.class)
-    public ResponseEntity<ExceptionErrorResponse> handleEntityNotFound(PageOutOfBoundsException ex) {
-        log.error("Entity not found", ex);
+    public ResponseEntity<ExceptionErrorResponse> handlePageOutOfBoundsException(PageOutOfBoundsException ex) {
+        log.error("Page out of bounds! ", ex);
 
         ExceptionErrorResponse response = new ExceptionErrorResponse();
         response.setMessage(ex.getMessage());
@@ -64,6 +65,18 @@ public class GlobalExceptionHandler {
         response.setStatus(HttpStatus.BAD_REQUEST);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(RoomNotFoundException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleRoomNotFoundException(RoomNotFoundException ex) {
+        log.error("Room with provided id not found! ", ex);
+
+        ExceptionErrorResponse response = new ExceptionErrorResponse();
+        response.setMessage(ex.getMessage());
+        response.setTimestamp(LocalDateTime.now());
+        response.setStatus(HttpStatus.NOT_FOUND);
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
     @ExceptionHandler(Exception.class)

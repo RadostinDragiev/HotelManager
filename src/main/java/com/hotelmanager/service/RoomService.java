@@ -20,4 +20,6 @@ public interface RoomService {
     RoomResponseDto getRoomById(String id);
 
     Page<RoomPageResponseDto> getAllRooms(Optional<RoomType> roomType, Optional<RoomStatus> status, Pageable pageable);
+
+    void deleteRoomById(String id);
 }
