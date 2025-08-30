@@ -30,7 +30,7 @@ public class Room extends BaseUUIDEntity {
     @Column(name = "capacity", nullable = false)
     private int capacity;
 
-    @ElementCollection(targetClass = BedType.class)
+    @ElementCollection(targetClass = BedType.class, fetch = FetchType.EAGER)
     @CollectionTable(name = "room_beds", joinColumns = @JoinColumn(name = "room_id"))
     @Enumerated(EnumType.STRING)
     private List<BedType> bedTypes;

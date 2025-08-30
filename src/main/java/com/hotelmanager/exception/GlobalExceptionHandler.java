@@ -1,5 +1,6 @@
 package com.hotelmanager.exception;
 
+import com.hotelmanager.exception.exceptions.PageOutOfBoundsException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -51,6 +52,18 @@ public class GlobalExceptionHandler {
         response.setMessage("Database constraint violation");
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    @ExceptionHandler(PageOutOfBoundsException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleEntityNotFound(PageOutOfBoundsException ex) {
+        log.error("Entity not found", ex);
+
+        ExceptionErrorResponse response = new ExceptionErrorResponse();
+        response.setMessage(ex.getMessage());
+        response.setTimestamp(LocalDateTime.now());
+        response.setStatus(HttpStatus.BAD_REQUEST);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(Exception.class)
