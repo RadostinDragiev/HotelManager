@@ -2,15 +2,22 @@ package com.hotelmanager.service.impl;
 
 import com.hotelmanager.model.dto.request.RoomCreationDto;
 import com.hotelmanager.model.dto.request.RoomUpdateDto;
+import com.hotelmanager.model.dto.response.RoomPageResponseDto;
 import com.hotelmanager.model.dto.response.RoomResponseDto;
 import com.hotelmanager.model.entity.Room;
+import com.hotelmanager.model.enums.RoomStatus;
+import com.hotelmanager.model.enums.RoomType;
 import com.hotelmanager.repository.RoomRepository;
 import com.hotelmanager.service.RoomService;
+import com.hotelmanager.validation.PageableValidator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -43,5 +50,30 @@ public class RoomServiceImpl implements RoomService {
 
         Room updatedRoom = this.roomRepository.save(existingRoom);
         return this.modelMapper.map(updatedRoom, RoomResponseDto.class);
+    }
+
+    @Override
+    public RoomResponseDto getRoomById(String id) {
+        Room room = this.roomRepository.findById(UUID.fromString(id))
+                .orElseThrow(() -> new EntityNotFoundException("Invalid room id " + id));
+        return this.modelMapper.map(room, RoomResponseDto.class);
+    }
+
+    @Override
+    public Page<RoomPageResponseDto> getAllRooms(Optional<RoomType> roomType, Optional<RoomStatus> roomStatus, Pageable pageable) {
+        Page<Room> rooms;
+        if (roomType.isPresent() && roomStatus.isPresent()) {
+            rooms = roomRepository.findByRoomTypeAndRoomStatus(roomType.get(), roomStatus.get(), pageable);
+        } else if (roomType.isPresent()) {
+            rooms = roomRepository.findByRoomType(roomType.get(), pageable);
+        } else if (roomStatus.isPresent()) {
+            rooms = roomRepository.findByRoomStatus(roomStatus.get(), pageable);
+        } else {
+            rooms = roomRepository.findAll(pageable);
+        }
+
+        PageableValidator.validatePageRequest(rooms, pageable);
+
+        return rooms.map(r -> modelMapper.map(r, RoomPageResponseDto.class));
     }
 }
