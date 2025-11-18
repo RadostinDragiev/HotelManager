@@ -7,6 +7,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -17,16 +22,49 @@ import java.time.LocalDateTime;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ExceptionErrorResponse> handleEntityNotFound(EntityNotFoundException ex) {
-        log.error("Entity not found", ex);
+    private static ResponseEntity<ExceptionErrorResponse> buildResponse(HttpStatus status, String message) {
 
-        ExceptionErrorResponse response = new ExceptionErrorResponse();
-        response.setMessage(ex.getMessage());
-        response.setTimestamp(LocalDateTime.now());
-        response.setStatus(HttpStatus.NOT_FOUND);
+        ExceptionErrorResponse response = ExceptionErrorResponse.builder()
+                .status(status)
+                .timestamp(LocalDateTime.now())
+                .message(message)
+                .build();
+        return ResponseEntity.status(status).body(response);
+    }
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleBadCredentialsException(BadCredentialsException ex) {
+        log.error("Bad credentials!");
+
+        return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
+
+    @ExceptionHandler(LockedException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleLockedException(LockedException ex) {
+        log.error("User is locked!");
+
+        return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
+
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleLockedException(DisabledException ex) {
+        log.error("User is disabled!");
+
+        return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
+
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleUsernameNotFoundException(UsernameNotFoundException ex) {
+        log.error("No user found with the provided credentials!");
+
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleAuthorizationDeniedException(AuthorizationDeniedException ex) {
+        log.error("Access denied!");
+
+        return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -43,51 +81,38 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleEntityNotFound(EntityNotFoundException ex) {
+        log.error("Entity not found", ex);
+
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ExceptionErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         log.error("Database constraint violation: ", ex);
 
-        ExceptionErrorResponse response = new ExceptionErrorResponse();
-        response.setStatus(HttpStatus.CONFLICT);
-        response.setTimestamp(LocalDateTime.now());
-        response.setMessage("Database constraint violation");
-
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        return buildResponse(HttpStatus.CONFLICT, "Database constraint violation!");
     }
 
     @ExceptionHandler(PageOutOfBoundsException.class)
     public ResponseEntity<ExceptionErrorResponse> handlePageOutOfBoundsException(PageOutOfBoundsException ex) {
         log.error("Page out of bounds! ", ex);
 
-        ExceptionErrorResponse response = new ExceptionErrorResponse();
-        response.setMessage(ex.getMessage());
-        response.setTimestamp(LocalDateTime.now());
-        response.setStatus(HttpStatus.BAD_REQUEST);
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(RoomNotFoundException.class)
     public ResponseEntity<ExceptionErrorResponse> handleRoomNotFoundException(RoomNotFoundException ex) {
         log.error("Room with provided id not found! ", ex);
 
-        ExceptionErrorResponse response = new ExceptionErrorResponse();
-        response.setMessage(ex.getMessage());
-        response.setTimestamp(LocalDateTime.now());
-        response.setStatus(HttpStatus.NOT_FOUND);
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ExceptionErrorResponse> handleAllExceptions(Exception ex) {
         log.error("Unhandled exception caught: ", ex);
 
-        ExceptionErrorResponse response = new ExceptionErrorResponse();
-        response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
-        response.setTimestamp(LocalDateTime.now());
-        response.setMessage("Unexpected error occurred");
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error occurred");
     }
 }

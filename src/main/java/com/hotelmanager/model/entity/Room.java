@@ -45,9 +45,18 @@ public class Room extends BaseUUIDEntity {
     private RoomStatus roomStatus;
 
     @CreationTimestamp
-    @Column(updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "created_date_time", nullable = false, updatable = false)
+    private LocalDateTime createdDateTime;
+
+    @ManyToOne
+    @JoinColumn(name = "created_by", referencedColumnName = "uuid")
+    private User createdBy;
 
     @UpdateTimestamp
-    private LocalDateTime updatedAt;
+    @Column(name = "updated_date_time", nullable = false, updatable = false)
+    private LocalDateTime updatedDateTime;
+
+    @ManyToOne
+    @JoinColumn(name = "updated_by", referencedColumnName = "uuid")
+    private User updatedBy;
 }

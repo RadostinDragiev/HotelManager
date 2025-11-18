@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
 
@@ -28,6 +29,7 @@ import static com.hotelmanager.validation.ValidationMessages.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@WithMockUser(username = "john")
 @SpringBootTest
 @AutoConfigureMockMvc
 class RoomControllerTest extends IntegrationBaseTest {
@@ -40,7 +42,7 @@ class RoomControllerTest extends IntegrationBaseTest {
     private static final String PRICE_PER_NIGHT_FIELD = "pricePerNight";
     private static final String DESCRIPTION_FIELD = "description";
     private static final String ROOM_STATUS_FIELD = "roomStatus";
-    private static final String PAGINATION_RESULT_PREFIX = ".content[0]";
+    private static final String PAGINATION_RESULT_PREFIX = ".rooms[0]";
 
     @Autowired
     private MockMvc mockMvc;
@@ -217,6 +219,7 @@ class RoomControllerTest extends IntegrationBaseTest {
                 .andExpectAll(expectValidationError(ROOM_STATUS_FIELD, ROOM_STATUS_REQUIRED));
     }
 
+    @WithMockUser(username = "john", roles = {"MANAGER"})
     @Test
     @DisplayName("Should return 404 when invalid room id passed")
     void testUpdateRoomThrowsException() throws Exception {
@@ -387,6 +390,7 @@ class RoomControllerTest extends IntegrationBaseTest {
                 .andExpectAll(expectValidationError(ROOM_STATUS_FIELD, ROOM_STATUS_REQUIRED));
     }
 
+    @WithMockUser(username = "john", roles = {"MANAGER"})
     @Test
     @DisplayName("Should return 200 and updated room for valid updates")
     void testUpdateValidRoom() throws Exception {
@@ -408,6 +412,7 @@ class RoomControllerTest extends IntegrationBaseTest {
                 .andExpect(jsonPath("$.roomStatus").value(dto.getRoomStatus().toString()));
     }
 
+    @WithMockUser(username = "john", roles = {"MANAGER"})
     @Test
     @DisplayName("Should return 201 and Location header for a valid room")
     void testCreateRoomSuccessful() throws Exception {
@@ -452,8 +457,8 @@ class RoomControllerTest extends IntegrationBaseTest {
                         .param(ROOM_TYPE_FIELD, RoomType.DOUBLE.toString())
                         .param(ROOM_STATUS_FIELD, RoomStatus.CLEANING.toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content").isEmpty());
+                .andExpect(jsonPath("$.rooms").isArray())
+                .andExpect(jsonPath("$.rooms").isEmpty());
     }
 
     @Test
@@ -501,7 +506,7 @@ class RoomControllerTest extends IntegrationBaseTest {
                         .param("size", String.valueOf(size)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalPages").value(2))
-                .andExpect(jsonPath("$.pageable.pageNumber").value(page))
+                .andExpect(jsonPath("$.page").value(page))
                 .andExpect(jsonPath("$.size").value(size));
     }
 
@@ -514,8 +519,8 @@ class RoomControllerTest extends IntegrationBaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .param(ROOM_TYPE_FIELD, RoomType.DOUBLE.toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content").isEmpty());
+                .andExpect(jsonPath("$.rooms").isArray())
+                .andExpect(jsonPath("$.rooms").isEmpty());
     }
 
     @Test
@@ -549,7 +554,7 @@ class RoomControllerTest extends IntegrationBaseTest {
                         .param("size", String.valueOf(size)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalPages").value(2))
-                .andExpect(jsonPath("$.pageable.pageNumber").value(page))
+                .andExpect(jsonPath("$.page").value(page))
                 .andExpect(jsonPath("$.size").value(size));
     }
 
@@ -573,8 +578,8 @@ class RoomControllerTest extends IntegrationBaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .param(ROOM_STATUS_FIELD, RoomStatus.CLEANING.toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content").isEmpty());
+                .andExpect(jsonPath("$.rooms").isArray())
+                .andExpect(jsonPath("$.rooms").isEmpty());
     }
 
     @Test
@@ -608,7 +613,7 @@ class RoomControllerTest extends IntegrationBaseTest {
                         .param("size", String.valueOf(size)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalPages").value(2))
-                .andExpect(jsonPath("$.pageable.pageNumber").value(page))
+                .andExpect(jsonPath("$.page").value(page))
                 .andExpect(jsonPath("$.size").value(size));
     }
 
@@ -652,7 +657,7 @@ class RoomControllerTest extends IntegrationBaseTest {
                         .param("size", String.valueOf(size)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalPages").value(2))
-                .andExpect(jsonPath("$.pageable.pageNumber").value(page))
+                .andExpect(jsonPath("$.page").value(page))
                 .andExpect(jsonPath("$.size").value(size));
     }
 
@@ -662,8 +667,8 @@ class RoomControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(get("/rooms")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content").isEmpty());
+                .andExpect(jsonPath("$.rooms").isArray())
+                .andExpect(jsonPath("$.rooms").isEmpty());
     }
 
     private static ResultMatcher[] expectValidationError(String field, String expectedMessage) {
@@ -686,6 +691,7 @@ class RoomControllerTest extends IntegrationBaseTest {
                 .andExpectAll(expectGetAllRooms(PAGINATION_RESULT_PREFIX, room));
     }
 
+    @WithMockUser(username = "john", roles = {"MANAGER"})
     @Test
     @DisplayName("Should return 404 when delete room by missing id")
     void testDeleteRoomByIdWithInvalidId() throws Exception {
@@ -697,6 +703,7 @@ class RoomControllerTest extends IntegrationBaseTest {
                 .andExpect(jsonPath("$.message").value(ROOM_NOT_FOUND_ID + RANDOM_ID));
     }
 
+    @WithMockUser(username = "john", roles = {"MANAGER"})
     @Test
     @DisplayName("Should return 200 when delete room by valid id")
     void testDeleteRoomById() throws Exception {
