@@ -1,6 +1,7 @@
 package com.hotelmanager.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hotelmanager.IntegrationBaseTest;
 import com.hotelmanager.model.dto.request.AuthRequestDto;
 import com.hotelmanager.model.entity.Role;
 import com.hotelmanager.model.entity.User;
@@ -13,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -27,10 +27,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Sql(value = "/db/roles.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_CLASS)
 @SpringBootTest
 @AutoConfigureMockMvc
-class AuthControllerTest {
+class AuthControllerTest extends IntegrationBaseTest {
 
     private static final String USERNAME = "john";
     private static final String PASSWORD = "password123";
