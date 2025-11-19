@@ -1,6 +1,7 @@
 package com.hotelmanager.service.impl;
 
 import com.hotelmanager.exception.exceptions.RolesNotFoundException;
+import com.hotelmanager.exception.exceptions.UserNotFoundException;
 import com.hotelmanager.model.dto.request.UserDto;
 import com.hotelmanager.model.entity.Role;
 import com.hotelmanager.model.entity.User;
@@ -48,6 +49,14 @@ public class UserServiceImpl implements UserService {
         user.setRoles(fetchRolesByIds(userDto.getRoles()));
 
         return this.userRepository.save(user).getUuid();
+    }
+
+    @Override
+    public void deactivateUser(String id) {
+        User user = this.userRepository.findById(UUID.fromString(id))
+                .orElseThrow(() -> new UserNotFoundException("No user found by the provided id!"));
+        user.setEnabled(false);
+        this.userRepository.save(user);
     }
 
     private Set<Role> fetchRolesByIds(Set<UUID> roleIds) {

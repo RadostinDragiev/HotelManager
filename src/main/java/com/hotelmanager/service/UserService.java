@@ -9,4 +9,6 @@ public interface UserService {
     void updateLastLogin(String username);
 
     UUID createUser(UserDto userDto);
+
+    void deactivateUser(String id);
 }

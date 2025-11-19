@@ -3,6 +3,7 @@ package com.hotelmanager.exception;
 import com.hotelmanager.exception.exceptions.PageOutOfBoundsException;
 import com.hotelmanager.exception.exceptions.RolesNotFoundException;
 import com.hotelmanager.exception.exceptions.RoomNotFoundException;
+import com.hotelmanager.exception.exceptions.UserNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -23,46 +24,53 @@ import java.time.LocalDateTime;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleUserNotFoundException(UserNotFoundException ex) {
+        log.error("User not found! ", ex);
+
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
     @ExceptionHandler(RolesNotFoundException.class)
     public ResponseEntity<ExceptionErrorResponse> handleRolesNotFoundException(RolesNotFoundException ex) {
-        log.error("Roles not found!");
+        log.error("Roles not found! ", ex);
 
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ExceptionErrorResponse> handleBadCredentialsException(BadCredentialsException ex) {
-        log.error("Bad credentials!");
+        log.error("Bad credentials!", ex);
 
         return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
     @ExceptionHandler(LockedException.class)
     public ResponseEntity<ExceptionErrorResponse> handleLockedException(LockedException ex) {
-        log.error("User is locked!");
+        log.error("User is locked!", ex);
 
         return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
     @ExceptionHandler(DisabledException.class)
     public ResponseEntity<ExceptionErrorResponse> handleLockedException(DisabledException ex) {
-        log.error("User is disabled!");
+        log.error("User is disabled!", ex);
 
         return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<ExceptionErrorResponse> handleUsernameNotFoundException(UsernameNotFoundException ex) {
-        log.error("No user found with the provided credentials!");
+        log.error("No user found with the provided credentials!", ex);
 
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler(AuthorizationDeniedException.class)
     public ResponseEntity<ExceptionErrorResponse> handleAuthorizationDeniedException(AuthorizationDeniedException ex) {
-        log.error("Access denied!");
+        log.error("Access denied!", ex);
 
-        return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
+        return buildResponse(HttpStatus.UNAUTHORIZED, "User is unauthorized to perform this action!");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
