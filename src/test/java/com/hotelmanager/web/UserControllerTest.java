@@ -4,8 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hotelmanager.IntegrationBaseTest;
 import com.hotelmanager.model.dto.request.UserDto;
 import com.hotelmanager.repository.RoleRepository;
+import com.hotelmanager.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,11 +19,14 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import static com.hotelmanager.validation.ValidationMessages.*;
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -53,14 +59,19 @@ class UserControllerTest extends IntegrationBaseTest {
     private ObjectMapper objectMapper;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private RoleRepository roleRepository;
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("authorizedManagementRoles")
     @DisplayName("Should return 200 when creating user with valid data")
-    void testCreateUserWithValidData() throws Exception {
+    void testCreateUserWithValidData(String role) throws Exception {
         UserDto dto = buildValidUserDto();
 
         this.mockMvc.perform(post("/users")
+                        .with(user("testUser").roles(role))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
@@ -337,6 +348,56 @@ class UserControllerTest extends IntegrationBaseTest {
                 .andExpectAll(expectValidationError(ROLES_FIELD, ROLES_NOT_EMPTY));
     }
 
+    @ParameterizedTest
+    @MethodSource("unauthorizedManagementRoles")
+    @DisplayName("Should return 401 when deactivating user with unauthorized user")
+    void testDCreateUserWithUnauthorizedUser(String role) throws Exception {
+        UserDto dto = buildValidUserDto();
+
+        this.mockMvc.perform(post("/users")
+                        .with(user("unauthorizedUser").roles(role))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(this.objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.timestamp").isNotEmpty())
+                .andExpect(jsonPath("$.message").value("User is unauthorized to perform this action!"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("authorizedManagementRoles")
+    @DisplayName("Should return 200 when deactivating user")
+    void testDeactivateUserSucceed(String role) throws Exception {
+        this.mockMvc.perform(delete("/users/{id}", fetchUserId())
+                        .with(user("authorizedUser").roles(role))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Should return 400 when no user found by id")
+    void testDeactivateUserWithInvalidId() throws Exception {
+        this.mockMvc.perform(delete("/users/{id}", UUID.randomUUID())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.timestamp").isNotEmpty())
+                .andExpect(jsonPath("$.message").value("No user found by the provided id!"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("unauthorizedManagementRoles")
+    @DisplayName("Should return 401 when deactivating user with unauthorized user")
+    void testDeactivateUserWithUnauthorizedUser(String role) throws Exception {
+        this.mockMvc.perform(delete("/users/{id}", fetchUserId())
+                        .with(user("unauthorizedUser").roles(role))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.timestamp").isNotEmpty())
+                .andExpect(jsonPath("$.message").value("User is unauthorized to perform this action!"));
+    }
+
     private UserDto buildValidUserDto() {
         return UserDto.builder()
                 .username(USERNAME)
@@ -364,5 +425,19 @@ class UserControllerTest extends IntegrationBaseTest {
         return this.roleRepository.findByName("USER")
                 .orElseThrow()
                 .getUuid();
+    }
+
+    private UUID fetchUserId() {
+        return this.userRepository.findByUsername("testUser")
+                .orElseThrow()
+                .getUuid();
+    }
+
+    private static List<String> authorizedManagementRoles() {
+        return List.of("MANAGER", "ADMINISTRATOR");
+    }
+
+    private static List<String> unauthorizedManagementRoles() {
+        return List.of("USER", "HOUSEKEEPING", "RECEPTIONIST");
     }
 }

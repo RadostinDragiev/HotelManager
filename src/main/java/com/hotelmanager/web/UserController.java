@@ -6,10 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.UUID;
@@ -21,7 +18,7 @@ public class UserController {
 
     private final UserService userService;
 
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR', 'MANAGER')")
     @PostMapping
     public ResponseEntity<Void> createUser(@Valid @RequestBody UserDto userDto, UriComponentsBuilder uriComponentsBuilder) {
         UUID userId = this.userService.createUser(userDto);
@@ -31,5 +28,13 @@ public class UserController {
                         .buildAndExpand(userId)
                         .toUri())
                 .build();
+    }
+
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR', 'MANAGER')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deactivateUser(@PathVariable String id) {
+        this.userService.deactivateUser(id);
+
+        return ResponseEntity.ok().build();
     }
 }
