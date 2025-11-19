@@ -1,6 +1,7 @@
 package com.hotelmanager.exception;
 
 import com.hotelmanager.exception.exceptions.PageOutOfBoundsException;
+import com.hotelmanager.exception.exceptions.RolesNotFoundException;
 import com.hotelmanager.exception.exceptions.RoomNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -22,14 +23,11 @@ import java.time.LocalDateTime;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private static ResponseEntity<ExceptionErrorResponse> buildResponse(HttpStatus status, String message) {
+    @ExceptionHandler(RolesNotFoundException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleRolesNotFoundException(RolesNotFoundException ex) {
+        log.error("Roles not found!");
 
-        ExceptionErrorResponse response = ExceptionErrorResponse.builder()
-                .status(status)
-                .timestamp(LocalDateTime.now())
-                .message(message)
-                .build();
-        return ResponseEntity.status(status).body(response);
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(BadCredentialsException.class)
@@ -114,5 +112,14 @@ public class GlobalExceptionHandler {
         log.error("Unhandled exception caught: ", ex);
 
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error occurred");
+    }
+
+    private static ResponseEntity<ExceptionErrorResponse> buildResponse(HttpStatus status, String message) {
+        ExceptionErrorResponse response = ExceptionErrorResponse.builder()
+                .status(status)
+                .timestamp(LocalDateTime.now())
+                .message(message)
+                .build();
+        return ResponseEntity.status(status).body(response);
     }
 }
