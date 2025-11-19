@@ -10,5 +10,7 @@ public interface UserService {
 
     UUID createUser(UserDto userDto);
 
+    void activateUser(String id);
+
     void deactivateUser(String id);
 }

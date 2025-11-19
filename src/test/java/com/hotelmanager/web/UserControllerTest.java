@@ -5,6 +5,7 @@ import com.hotelmanager.IntegrationBaseTest;
 import com.hotelmanager.model.dto.request.UserDto;
 import com.hotelmanager.repository.RoleRepository;
 import com.hotelmanager.repository.UserRepository;
+import com.hotelmanager.service.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -60,6 +61,9 @@ class UserControllerTest extends IntegrationBaseTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private RoleRepository roleRepository;
@@ -362,6 +366,48 @@ class UserControllerTest extends IntegrationBaseTest {
                 .andExpect(jsonPath("$.status").value("UNAUTHORIZED"))
                 .andExpect(jsonPath("$.timestamp").isNotEmpty())
                 .andExpect(jsonPath("$.message").value("User is unauthorized to perform this action!"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("authorizedManagementRoles")
+    @DisplayName("Should return 200 when activating user with authorized user")
+    void testActivateUserWithAuthorizedUser(String role) throws Exception {
+        UserDto userDto = buildValidUserDto();
+        userDto.setIsEnabled(false);
+        UUID userId = this.userService.createUser(userDto);
+
+        this.mockMvc.perform(post("/users/{id}/activate", userId)
+                        .with(user("authorizedUser").roles(role))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @ParameterizedTest
+    @MethodSource("unauthorizedManagementRoles")
+    @DisplayName("Should return 401 when activating user with unauthorized user")
+    void testActivateUserWithUnauthorizedUser(String role) throws Exception {
+        UserDto userDto = buildValidUserDto();
+        userDto.setIsEnabled(false);
+        UUID userId = this.userService.createUser(userDto);
+
+        this.mockMvc.perform(post("/users/{id}/activate", userId)
+                        .with(user("unauthorizedUser").roles(role))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.timestamp").isNotEmpty())
+                .andExpect(jsonPath("$.message").value("User is unauthorized to perform this action!"));
+    }
+
+    @Test
+    @DisplayName("Should return 400 when no user found by id")
+    void testActivateUserWithInvalidId() throws Exception {
+        this.mockMvc.perform(post("/users/{id}/activate", UUID.randomUUID())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.timestamp").isNotEmpty())
+                .andExpect(jsonPath("$.message").value("No user found by the provided id!"));
     }
 
     @ParameterizedTest
