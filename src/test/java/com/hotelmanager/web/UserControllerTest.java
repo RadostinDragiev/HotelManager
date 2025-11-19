@@ -24,7 +24,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@Sql(scripts = "/db/users.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_CLASS)
+@Sql(scripts = "/db/users.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @WithMockUser(username = "testUser", roles = {"MANAGER"})
 @SpringBootTest
 @AutoConfigureMockMvc
