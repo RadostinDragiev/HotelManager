@@ -31,6 +31,14 @@ public class UserController {
     }
 
     @PreAuthorize("hasAnyRole('ADMINISTRATOR', 'MANAGER')")
+    @PostMapping("/{id}/activate")
+    public ResponseEntity<Void> activateUser(@PathVariable String id) {
+        this.userService.activateUser(id);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR', 'MANAGER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deactivateUser(@PathVariable String id) {
         this.userService.deactivateUser(id);

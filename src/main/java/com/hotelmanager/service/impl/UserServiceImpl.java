@@ -52,10 +52,20 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void activateUser(String id) {
+        User user = this.userRepository.findById(UUID.fromString(id))
+                .orElseThrow(() -> new UserNotFoundException("No user found by the provided id!"));
+        user.setEnabled(true);
+
+        this.userRepository.save(user);
+    }
+
+    @Override
     public void deactivateUser(String id) {
         User user = this.userRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new UserNotFoundException("No user found by the provided id!"));
         user.setEnabled(false);
+
         this.userRepository.save(user);
     }
 
