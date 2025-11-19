@@ -149,7 +149,8 @@ class RoomServiceImplTest {
         UUID fakeId = UUID.randomUUID();
         when(this.roomRepository.findById(fakeId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> this.roomService.getRoomById(fakeId.toString()))
+        String id = fakeId.toString();
+        assertThatThrownBy(() -> this.roomService.getRoomById(id))
                 .isInstanceOf(RoomNotFoundException.class)
                 .hasMessageContaining(ROOM_NOT_FOUND_ID + fakeId);
     }
@@ -215,7 +216,8 @@ class RoomServiceImplTest {
         UUID fakeId = UUID.randomUUID();
         when(this.roomRepository.existsById(fakeId)).thenReturn(false);
 
-        assertThatThrownBy(() -> this.roomService.deleteRoomById(fakeId.toString()))
+        String id = fakeId.toString();
+        assertThatThrownBy(() -> this.roomService.deleteRoomById(id))
                 .isInstanceOf(RoomNotFoundException.class)
                 .hasMessageContaining(ROOM_NOT_FOUND_ID + fakeId);
         verify(roomRepository, never()).deleteById(any());
