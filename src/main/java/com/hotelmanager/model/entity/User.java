@@ -53,6 +53,6 @@ public class User extends BaseUUIDEntity {
     @Column(name = "created_date_time", nullable = false, updatable = false)
     private LocalDateTime createdDateTime;
 
-    @Column(name = "last_login_date_time", nullable = false)
+    @Column(name = "last_login_date_time")
     private LocalDateTime lastLoginDateTime;
 }
