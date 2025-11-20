@@ -24,8 +24,7 @@ import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
 
-import static com.hotelmanager.exception.ExceptionMessages.NEW_PASSWORDS_DOES_NOT_MATCH;
-import static com.hotelmanager.exception.ExceptionMessages.OLD_PASSWORD_DOES_NOT_MATCH;
+import static com.hotelmanager.exception.ExceptionMessages.*;
 
 @Service
 @RequiredArgsConstructor
@@ -50,9 +49,7 @@ public class UserServiceImpl implements UserService {
     public UUID createUser(UserDto userDto) {
         User user = this.modelMapper.map(userDto, User.class);
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User creationUser = this.userRepository.findByUsername(auth.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("No user with provided username found!"));
+        User creationUser = getAuthenticationUser();
         user.setCreatedBy(creationUser);
         user.setRoles(fetchRolesByIds(userDto.getRoles()));
 
@@ -61,11 +58,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ProfileDto getUserProfile() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User creationUser = this.userRepository.findByUsername(auth.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("No user with provided username found!"));
+        User user = getAuthenticationUser();
 
-        return this.modelMapper.map(creationUser, ProfileDto.class);
+        return this.modelMapper.map(user, ProfileDto.class);
     }
 
     @Override
@@ -86,7 +81,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void activateUser(String id) {
         User user = this.userRepository.findById(UUID.fromString(id))
-                .orElseThrow(() -> new UserNotFoundException("No user found by the provided id!"));
+                .orElseThrow(() -> new UserNotFoundException(NO_USER_FOUND_BY_ID));
         user.setEnabled(true);
 
         this.userRepository.save(user);
@@ -95,7 +90,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deactivateUser(String id) {
         User user = this.userRepository.findById(UUID.fromString(id))
-                .orElseThrow(() -> new UserNotFoundException("No user found by the provided id!"));
+                .orElseThrow(() -> new UserNotFoundException(NO_USER_FOUND_BY_ID));
         user.setEnabled(false);
 
         this.userRepository.save(user);
@@ -113,6 +108,6 @@ public class UserServiceImpl implements UserService {
     private User getAuthenticationUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return this.userRepository.findByUsername(auth.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("No user with provided username found!"));
+                .orElseThrow(() -> new UsernameNotFoundException(NO_USER_FOUND_BY_USERNAME));
     }
 }
