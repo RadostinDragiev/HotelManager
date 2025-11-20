@@ -1,9 +1,6 @@
 package com.hotelmanager.exception;
 
-import com.hotelmanager.exception.exceptions.PageOutOfBoundsException;
-import com.hotelmanager.exception.exceptions.RolesNotFoundException;
-import com.hotelmanager.exception.exceptions.RoomNotFoundException;
-import com.hotelmanager.exception.exceptions.UserNotFoundException;
+import com.hotelmanager.exception.exceptions.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -23,6 +20,13 @@ import java.time.LocalDateTime;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(PasswordsDoesNotMatchException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleUserNotFoundException(PasswordsDoesNotMatchException ex) {
+        log.error("Passwords does not match! ", ex);
+
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ExceptionErrorResponse> handleUserNotFoundException(UserNotFoundException ex) {
