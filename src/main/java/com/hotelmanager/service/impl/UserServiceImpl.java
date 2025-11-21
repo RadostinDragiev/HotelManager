@@ -6,13 +6,18 @@ import com.hotelmanager.exception.exceptions.UserNotFoundException;
 import com.hotelmanager.model.dto.request.ProfilePasswordDto;
 import com.hotelmanager.model.dto.request.UserDto;
 import com.hotelmanager.model.dto.response.ProfileDto;
+import com.hotelmanager.model.dto.response.UserDetailsDto;
+import com.hotelmanager.model.dto.response.UserPageDto;
 import com.hotelmanager.model.entity.Role;
 import com.hotelmanager.model.entity.User;
 import com.hotelmanager.repository.UserRepository;
 import com.hotelmanager.service.RoleService;
 import com.hotelmanager.service.UserService;
+import com.hotelmanager.validation.PageableValidator;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -64,6 +69,22 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Page<UserPageDto> getAllUsers(Pageable pageable) {
+        Page<User> users = this.userRepository.findAll(pageable);
+        PageableValidator.validatePageRequest(users, pageable);
+
+        return users.map(user -> this.modelMapper.map(user, UserPageDto.class));
+    }
+
+    @Override
+    public UserDetailsDto getUserById(String id) {
+        User user = this.userRepository.findById(UUID.fromString(id))
+                .orElseThrow(() -> new UserNotFoundException(NO_USER_FOUND_BY_ID));
+
+        return this.modelMapper.map(user, UserDetailsDto.class);
+    }
+
+    @Override
     public void updateProfilePassword(ProfilePasswordDto passwordDto) {
         if (!passwordDto.getNewPassword().equals(passwordDto.getConfirmNewPassword())) {
             throw new PasswordsDoesNotMatchException(NEW_PASSWORDS_DOES_NOT_MATCH);
@@ -99,7 +120,7 @@ public class UserServiceImpl implements UserService {
     private Set<Role> fetchRolesByIds(Set<UUID> roleIds) {
         Set<Role> roles = this.roleService.getRolesByIds(roleIds);
         if (roles == null || roles.isEmpty() || (roles.size() != roleIds.size())) {
-            throw new RolesNotFoundException("Invalid role ids provided!");
+            throw new RolesNotFoundException(ROLE_NOT_FOUND);
         }
 
         return roles;
