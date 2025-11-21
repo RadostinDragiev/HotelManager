@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 
+import static com.hotelmanager.exception.ExceptionMessages.USER_UNAUTHORIZED;
+
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -74,7 +76,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ExceptionErrorResponse> handleAuthorizationDeniedException(AuthorizationDeniedException ex) {
         log.error("Access denied!", ex);
 
-        return buildResponse(HttpStatus.UNAUTHORIZED, "User is unauthorized to perform this action!");
+        return buildResponse(HttpStatus.UNAUTHORIZED, USER_UNAUTHORIZED);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

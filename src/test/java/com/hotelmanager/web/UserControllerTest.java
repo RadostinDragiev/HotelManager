@@ -16,7 +16,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
 
@@ -24,14 +23,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import static com.hotelmanager.exception.ExceptionMessages.*;
 import static com.hotelmanager.validation.ValidationMessages.*;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@Sql(scripts = "/db/users.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @WithMockUser(username = "testUser", roles = {"MANAGER"})
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -92,9 +90,7 @@ class UserControllerTest extends IntegrationBaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
-                .andExpect(jsonPath("$.timestamp").isNotEmpty())
-                .andExpect(jsonPath("$.message").value("Invalid role ids provided!"));
+                .andExpectAll(expectException("BAD_REQUEST", ROLE_NOT_FOUND));
     }
 
     @WithMockUser(username = "invalid", roles = {"MANAGER"})
@@ -107,9 +103,7 @@ class UserControllerTest extends IntegrationBaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value("NOT_FOUND"))
-                .andExpect(jsonPath("$.timestamp").isNotEmpty())
-                .andExpect(jsonPath("$.message").value("No user with provided username found!"));
+                .andExpectAll(expectException("NOT_FOUND", NO_USER_FOUND_BY_USERNAME));
     }
 
     @Test
@@ -355,7 +349,7 @@ class UserControllerTest extends IntegrationBaseTest {
     @ParameterizedTest
     @MethodSource("unauthorizedManagementRoles")
     @DisplayName("Should return 401 when deactivating user with unauthorized user")
-    void testDCreateUserWithUnauthorizedUser(String role) throws Exception {
+    void testCreateUserWithUnauthorizedUser(String role) throws Exception {
         UserDto dto = buildValidUserDto();
 
         this.mockMvc.perform(post("/users")
@@ -363,9 +357,69 @@ class UserControllerTest extends IntegrationBaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.status").value("UNAUTHORIZED"))
-                .andExpect(jsonPath("$.timestamp").isNotEmpty())
-                .andExpect(jsonPath("$.message").value("User is unauthorized to perform this action!"));
+                .andExpectAll(expectException("UNAUTHORIZED", USER_UNAUTHORIZED));
+    }
+
+    @Test
+    @DisplayName("Should return 200 when get all users with existing users")
+    void testGetAllUsersReturnRecords() throws Exception {
+        this.mockMvc.perform(get("/users")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.records").isNotEmpty())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.records[0].uuid").isNotEmpty())
+                .andExpect(jsonPath("$.records[0].firstName").value("Test"))
+                .andExpect(jsonPath("$.records[0].lastName").value("User"))
+                .andExpect(jsonPath("$.records[0].position").value("TEST_USER"))
+                .andExpect(jsonPath("$.records[0].createdDateTime").isNotEmpty())
+                .andExpect(jsonPath("$.records[0].enabled").value(true));
+    }
+
+    @Test
+    @DisplayName("Should return 200 when get all users without existing users")
+    void testGetAllUsersWithEmptyTable() throws Exception {
+        this.userRepository.deleteAll();
+
+        this.mockMvc.perform(get("/users")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.records").isArray())
+                .andExpect(jsonPath("$.records").isEmpty())
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.totalPages").value(0));
+    }
+
+    @Test
+    @DisplayName("Should return 200 when get user by id find a user")
+    void testGetUserByIdSuccessfully() throws Exception {
+        UUID userId = fetchUserId();
+
+        this.mockMvc.perform(get("/users/{id}", userId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("testUser"))
+                .andExpect(jsonPath("$.firstName").value("Test"))
+                .andExpect(jsonPath("$.lastName").value("User"))
+                .andExpect(jsonPath("$.email").value("testUser@example.com"))
+                .andExpect(jsonPath("$.roles").isArray())
+                .andExpect(jsonPath("$.roles").isNotEmpty())
+                .andExpect(jsonPath("$.roles").isArray())
+                .andExpect(jsonPath("$.createdDateTime").isNotEmpty())
+                .andExpect(jsonPath("$.lastLoginDateTime").isNotEmpty());
+    }
+
+    @Test
+    @DisplayName("Should return 400 when get user by invalid id")
+    void testGetUserByIdWithInvalidId() throws Exception {
+        UUID userId = UUID.randomUUID();
+
+        this.mockMvc.perform(get("/users/{id}", userId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpectAll(expectException("BAD_REQUEST", NO_USER_FOUND_BY_ID));
     }
 
     @ParameterizedTest
@@ -394,9 +448,7 @@ class UserControllerTest extends IntegrationBaseTest {
                         .with(user("unauthorizedUser").roles(role))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.status").value("UNAUTHORIZED"))
-                .andExpect(jsonPath("$.timestamp").isNotEmpty())
-                .andExpect(jsonPath("$.message").value("User is unauthorized to perform this action!"));
+                .andExpectAll(expectException("UNAUTHORIZED", USER_UNAUTHORIZED));
     }
 
     @Test
@@ -405,9 +457,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users/{id}/activate", UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
-                .andExpect(jsonPath("$.timestamp").isNotEmpty())
-                .andExpect(jsonPath("$.message").value("No user found by the provided id!"));
+                .andExpectAll(expectException("BAD_REQUEST", NO_USER_FOUND_BY_ID));
     }
 
     @ParameterizedTest
@@ -426,9 +476,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(delete("/users/{id}", UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
-                .andExpect(jsonPath("$.timestamp").isNotEmpty())
-                .andExpect(jsonPath("$.message").value("No user found by the provided id!"));
+                .andExpectAll(expectException("BAD_REQUEST", NO_USER_FOUND_BY_ID));
     }
 
     @ParameterizedTest
@@ -439,9 +487,7 @@ class UserControllerTest extends IntegrationBaseTest {
                         .with(user("unauthorizedUser").roles(role))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.status").value("UNAUTHORIZED"))
-                .andExpect(jsonPath("$.timestamp").isNotEmpty())
-                .andExpect(jsonPath("$.message").value("User is unauthorized to perform this action!"));
+                .andExpectAll(expectException("UNAUTHORIZED", USER_UNAUTHORIZED));
     }
 
     private UserDto buildValidUserDto() {
@@ -464,6 +510,14 @@ class UserControllerTest extends IntegrationBaseTest {
                 jsonPath("$.message").value("Validation error"),
                 jsonPath("$.fieldErrors[0].field").value(field),
                 jsonPath("$.fieldErrors[0].message").value(expectedMessage)
+        };
+    }
+
+    private static ResultMatcher[] expectException(String status, String expectedMessage) {
+        return new ResultMatcher[]{
+                jsonPath("$.status").value(status),
+                jsonPath("$.timestamp").isNotEmpty(),
+                jsonPath("$.message").value(expectedMessage)
         };
     }
 
