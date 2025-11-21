@@ -1,24 +1,35 @@
 package com.hotelmanager.service.impl;
 
+import com.hotelmanager.exception.exceptions.PasswordsDoesNotMatchException;
 import com.hotelmanager.exception.exceptions.RolesNotFoundException;
 import com.hotelmanager.exception.exceptions.UserNotFoundException;
+import com.hotelmanager.model.dto.request.ProfilePasswordDto;
 import com.hotelmanager.model.dto.request.UserDto;
+import com.hotelmanager.model.dto.response.ProfileDto;
+import com.hotelmanager.model.dto.response.UserDetailsDto;
+import com.hotelmanager.model.dto.response.UserPageDto;
 import com.hotelmanager.model.entity.Role;
 import com.hotelmanager.model.entity.User;
 import com.hotelmanager.repository.UserRepository;
 import com.hotelmanager.service.RoleService;
 import com.hotelmanager.service.UserService;
+import com.hotelmanager.validation.PageableValidator;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
+
+import static com.hotelmanager.exception.ExceptionMessages.*;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +38,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
     private final RoleService roleService;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -42,9 +54,7 @@ public class UserServiceImpl implements UserService {
     public UUID createUser(UserDto userDto) {
         User user = this.modelMapper.map(userDto, User.class);
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User creationUser = this.userRepository.findByUsername(auth.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("No user with provided username found!"));
+        User creationUser = getAuthenticationUser();
         user.setCreatedBy(creationUser);
         user.setRoles(fetchRolesByIds(userDto.getRoles()));
 
@@ -52,9 +62,47 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public ProfileDto getUserProfile() {
+        User user = getAuthenticationUser();
+
+        return this.modelMapper.map(user, ProfileDto.class);
+    }
+
+    @Override
+    public Page<UserPageDto> getAllUsers(Pageable pageable) {
+        Page<User> users = this.userRepository.findAll(pageable);
+        PageableValidator.validatePageRequest(users, pageable);
+
+        return users.map(user -> this.modelMapper.map(user, UserPageDto.class));
+    }
+
+    @Override
+    public UserDetailsDto getUserById(String id) {
+        User user = this.userRepository.findById(UUID.fromString(id))
+                .orElseThrow(() -> new UserNotFoundException(NO_USER_FOUND_BY_ID));
+
+        return this.modelMapper.map(user, UserDetailsDto.class);
+    }
+
+    @Override
+    public void updateProfilePassword(ProfilePasswordDto passwordDto) {
+        if (!passwordDto.getNewPassword().equals(passwordDto.getConfirmNewPassword())) {
+            throw new PasswordsDoesNotMatchException(NEW_PASSWORDS_DOES_NOT_MATCH);
+        }
+
+        User user = getAuthenticationUser();
+        if (!this.passwordEncoder.matches(passwordDto.getOldPassword(), user.getPassword())) {
+            throw new PasswordsDoesNotMatchException(OLD_PASSWORD_DOES_NOT_MATCH);
+        }
+
+        user.setPassword(this.passwordEncoder.encode(passwordDto.getNewPassword()));
+        this.userRepository.save(user);
+    }
+
+    @Override
     public void activateUser(String id) {
         User user = this.userRepository.findById(UUID.fromString(id))
-                .orElseThrow(() -> new UserNotFoundException("No user found by the provided id!"));
+                .orElseThrow(() -> new UserNotFoundException(NO_USER_FOUND_BY_ID));
         user.setEnabled(true);
 
         this.userRepository.save(user);
@@ -63,7 +111,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deactivateUser(String id) {
         User user = this.userRepository.findById(UUID.fromString(id))
-                .orElseThrow(() -> new UserNotFoundException("No user found by the provided id!"));
+                .orElseThrow(() -> new UserNotFoundException(NO_USER_FOUND_BY_ID));
         user.setEnabled(false);
 
         this.userRepository.save(user);
@@ -72,9 +120,15 @@ public class UserServiceImpl implements UserService {
     private Set<Role> fetchRolesByIds(Set<UUID> roleIds) {
         Set<Role> roles = this.roleService.getRolesByIds(roleIds);
         if (roles == null || roles.isEmpty() || (roles.size() != roleIds.size())) {
-            throw new RolesNotFoundException("Invalid role ids provided!");
+            throw new RolesNotFoundException(ROLE_NOT_FOUND);
         }
 
         return roles;
+    }
+
+    private User getAuthenticationUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return this.userRepository.findByUsername(auth.getName())
+                .orElseThrow(() -> new UsernameNotFoundException(NO_USER_FOUND_BY_USERNAME));
     }
 }

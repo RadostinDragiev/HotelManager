@@ -1,9 +1,6 @@
 package com.hotelmanager.exception;
 
-import com.hotelmanager.exception.exceptions.PageOutOfBoundsException;
-import com.hotelmanager.exception.exceptions.RolesNotFoundException;
-import com.hotelmanager.exception.exceptions.RoomNotFoundException;
-import com.hotelmanager.exception.exceptions.UserNotFoundException;
+import com.hotelmanager.exception.exceptions.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -20,9 +17,18 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 
+import static com.hotelmanager.exception.ExceptionMessages.USER_UNAUTHORIZED;
+
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(PasswordsDoesNotMatchException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleUserNotFoundException(PasswordsDoesNotMatchException ex) {
+        log.error("Passwords does not match! ", ex);
+
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ExceptionErrorResponse> handleUserNotFoundException(UserNotFoundException ex) {
@@ -70,7 +76,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ExceptionErrorResponse> handleAuthorizationDeniedException(AuthorizationDeniedException ex) {
         log.error("Access denied!", ex);
 
-        return buildResponse(HttpStatus.UNAUTHORIZED, "User is unauthorized to perform this action!");
+        return buildResponse(HttpStatus.UNAUTHORIZED, USER_UNAUTHORIZED);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

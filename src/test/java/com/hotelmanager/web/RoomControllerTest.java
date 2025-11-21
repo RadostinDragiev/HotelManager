@@ -42,7 +42,7 @@ class RoomControllerTest extends IntegrationBaseTest {
     private static final String PRICE_PER_NIGHT_FIELD = "pricePerNight";
     private static final String DESCRIPTION_FIELD = "description";
     private static final String ROOM_STATUS_FIELD = "roomStatus";
-    private static final String PAGINATION_RESULT_PREFIX = ".rooms[0]";
+    private static final String PAGINATION_RESULT_PREFIX = ".records[0]";
 
     @Autowired
     private MockMvc mockMvc;
@@ -457,8 +457,8 @@ class RoomControllerTest extends IntegrationBaseTest {
                         .param(ROOM_TYPE_FIELD, RoomType.DOUBLE.toString())
                         .param(ROOM_STATUS_FIELD, RoomStatus.CLEANING.toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.rooms").isArray())
-                .andExpect(jsonPath("$.rooms").isEmpty());
+                .andExpect(jsonPath("$.records").isArray())
+                .andExpect(jsonPath("$.records").isEmpty());
     }
 
     @Test
@@ -519,8 +519,8 @@ class RoomControllerTest extends IntegrationBaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .param(ROOM_TYPE_FIELD, RoomType.DOUBLE.toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.rooms").isArray())
-                .andExpect(jsonPath("$.rooms").isEmpty());
+                .andExpect(jsonPath("$.records").isArray())
+                .andExpect(jsonPath("$.records").isEmpty());
     }
 
     @Test
@@ -578,8 +578,8 @@ class RoomControllerTest extends IntegrationBaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .param(ROOM_STATUS_FIELD, RoomStatus.CLEANING.toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.rooms").isArray())
-                .andExpect(jsonPath("$.rooms").isEmpty());
+                .andExpect(jsonPath("$.records").isArray())
+                .andExpect(jsonPath("$.records").isEmpty());
     }
 
     @Test
@@ -667,8 +667,8 @@ class RoomControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(get("/rooms")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.rooms").isArray())
-                .andExpect(jsonPath("$.rooms").isEmpty());
+                .andExpect(jsonPath("$.records").isArray())
+                .andExpect(jsonPath("$.records").isEmpty());
     }
 
     private static ResultMatcher[] expectValidationError(String field, String expectedMessage) {
