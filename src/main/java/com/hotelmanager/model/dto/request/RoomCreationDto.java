@@ -19,7 +19,7 @@ import static com.hotelmanager.validation.ValidationMessages.*;
 public class RoomCreationDto {
 
     @NotNull(message = ROOM_NUMBER_REQUIRED)
-    @Pattern(regexp = "^[1-9][0-9]*$", message = ROOM_NUMBER_POSITIVE)
+    @Pattern(regexp = "^[1-9]\\d*$", message = ROOM_NUMBER_POSITIVE)
     @Size(max = 10, message = ROOM_NUMBER_MAX)
     private String roomNumber;
 

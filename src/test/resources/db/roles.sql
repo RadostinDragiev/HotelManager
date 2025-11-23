@@ -1,3 +1,6 @@
+DELETE FROM users_roles;
+DELETE FROM roles;
+
 INSERT INTO roles (uuid, name, created_date_time)
 VALUES (UUID(), 'ADMINISTRATOR', CURRENT_TIMESTAMP),
        (UUID(), 'MANAGER', CURRENT_TIMESTAMP),
