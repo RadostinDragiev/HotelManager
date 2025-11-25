@@ -4,11 +4,13 @@ import com.hotelmanager.exception.exceptions.RoomNotFoundException;
 import com.hotelmanager.model.dto.request.RoomCreationDto;
 import com.hotelmanager.model.dto.request.RoomUpdateDto;
 import com.hotelmanager.model.dto.response.RoomPageResponseDto;
+import com.hotelmanager.model.dto.response.RoomPhotoSummaryDto;
 import com.hotelmanager.model.dto.response.RoomResponseDto;
 import com.hotelmanager.model.entity.Room;
 import com.hotelmanager.model.enums.RoomStatus;
 import com.hotelmanager.model.enums.RoomType;
 import com.hotelmanager.repository.RoomRepository;
+import com.hotelmanager.service.FilesService;
 import com.hotelmanager.service.RoomService;
 import com.hotelmanager.validation.PageableValidator;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -28,6 +31,7 @@ public class RoomServiceImpl implements RoomService {
 
     private final RoomRepository roomRepository;
     private final ModelMapper modelMapper;
+    private final FilesService filesService;
 
     @Override
     public RoomResponseDto createRoom(RoomCreationDto creationDto) {
@@ -58,7 +62,14 @@ public class RoomServiceImpl implements RoomService {
     public RoomResponseDto getRoomById(String id) {
         Room room = this.roomRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new RoomNotFoundException(ROOM_NOT_FOUND_ID + id));
-        return this.modelMapper.map(room, RoomResponseDto.class);
+        List<RoomPhotoSummaryDto> photosByRoom = this.filesService.getPhotosByRoom(room.getUuid().toString())
+                .stream()
+                .map(photo -> this.modelMapper.map(photo, RoomPhotoSummaryDto.class))
+                .toList();
+
+        RoomResponseDto roomResponseDto = this.modelMapper.map(room, RoomResponseDto.class);
+        roomResponseDto.setPhotos(photosByRoom);
+        return roomResponseDto;
     }
 
     @Override
@@ -84,6 +95,8 @@ public class RoomServiceImpl implements RoomService {
         if (!this.roomRepository.existsById(UUID.fromString(id))) {
             throw new RoomNotFoundException(ROOM_NOT_FOUND_ID + id);
         }
+
         this.roomRepository.deleteById(UUID.fromString(id));
+        this.filesService.deletePhotoByRoom(id);
     }
 }

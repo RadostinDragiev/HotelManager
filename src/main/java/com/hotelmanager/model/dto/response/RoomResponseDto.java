@@ -32,4 +32,6 @@ public class RoomResponseDto {
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime updatedAt;
+
+    private List<RoomPhotoSummaryDto> photos;
 }
