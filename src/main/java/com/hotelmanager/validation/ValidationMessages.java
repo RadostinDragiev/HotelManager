@@ -7,6 +7,8 @@ public final class ValidationMessages {
     public static final String ROOM_NUMBER_MAX = "Room number must not exceed 10 digits";
 
     public static final String ROOM_TYPE_REQUIRED = "Room type is required";
+    public static final String ROOM_TYPE_NAME_NOT_NULL = "Room type name cannot be null!";
+    public static final String ROOM_TYPE_NAME_SIZE = "Room type name should be between 5 and 50 characters!";
 
     public static final String CAPACITY_POSITIVE = "Capacity must be positive";
     public static final String CAPACITY_MAX = "Capacity must be less than 10";

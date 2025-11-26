@@ -23,6 +23,27 @@ import static com.hotelmanager.exception.ExceptionMessages.USER_UNAUTHORIZED;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(RoomTypeAlreadyExistsException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleRoomTypeAlreadyExistsException(RoomTypeAlreadyExistsException ex) {
+        log.error("Room type already exists! ", ex);
+
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(RoomNumberAlreadyExistsException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleRoomNumberAlreadyExistsException(RoomNumberAlreadyExistsException ex) {
+        log.error("Room with provided number already exists! ", ex);
+
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(RoomTypeNotFoundException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleRoomTypeNotFoundException(RoomTypeNotFoundException ex) {
+        log.error("Room type not found! ", ex);
+
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
     @ExceptionHandler(PasswordsDoesNotMatchException.class)
     public ResponseEntity<ExceptionErrorResponse> handleUserNotFoundException(PasswordsDoesNotMatchException ex) {
         log.error("Passwords does not match! ", ex);

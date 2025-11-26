@@ -2,13 +2,11 @@ package com.hotelmanager.model.entity;
 
 import com.hotelmanager.model.enums.BedType;
 import com.hotelmanager.model.enums.RoomStatus;
-import com.hotelmanager.model.enums.RoomType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,22 +22,14 @@ public class Room extends BaseUUIDEntity {
     @Column(name = "room_number", unique = true, nullable = false)
     private String roomNumber;
 
-    @Enumerated(EnumType.STRING)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_type_id", referencedColumnName = "uuid")
     private RoomType roomType;
-
-    @Column(name = "capacity", nullable = false)
-    private int capacity;
 
     @ElementCollection(targetClass = BedType.class, fetch = FetchType.EAGER)
     @CollectionTable(name = "room_beds", joinColumns = @JoinColumn(name = "room_id"))
     @Enumerated(EnumType.STRING)
     private List<BedType> bedTypes;
-
-    @Column(name = "price_per_night", nullable = false)
-    private BigDecimal pricePerNight;
-
-    @Column(name = "description", columnDefinition = "TEXT")
-    private String description;
 
     @Enumerated(EnumType.STRING)
     private RoomStatus roomStatus;

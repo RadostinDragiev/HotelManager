@@ -6,7 +6,6 @@ import com.hotelmanager.model.dto.response.PageResponse;
 import com.hotelmanager.model.dto.response.RoomPageResponseDto;
 import com.hotelmanager.model.dto.response.RoomResponseDto;
 import com.hotelmanager.model.enums.RoomStatus;
-import com.hotelmanager.model.enums.RoomType;
 import com.hotelmanager.service.RoomService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/rooms")
@@ -51,7 +51,7 @@ public class RoomController {
     }
 
     @GetMapping
-    public PageResponse<RoomPageResponseDto> getAllRooms(@RequestParam Optional<RoomType> roomType,
+    public PageResponse<RoomPageResponseDto> getAllRooms(@RequestParam Optional<UUID> roomType,
                                                          @RequestParam Optional<RoomStatus> roomStatus,
                                                          @RequestParam(defaultValue = "0") int page,
                                                          @RequestParam(defaultValue = "10") int size) {

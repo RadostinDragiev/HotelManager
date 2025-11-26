@@ -7,7 +7,6 @@ import com.hotelmanager.model.dto.request.RoomUpdateDto;
 import com.hotelmanager.model.dto.response.RoomResponseDto;
 import com.hotelmanager.model.enums.BedType;
 import com.hotelmanager.model.enums.RoomStatus;
-import com.hotelmanager.model.enums.RoomType;
 import com.hotelmanager.service.RoomService;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
@@ -17,19 +16,22 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
-import static com.hotelmanager.exception.ExceptionMessages.ROOM_NOT_FOUND_ID;
+import static com.hotelmanager.exception.ExceptionMessages.*;
+import static com.hotelmanager.testutil.ErrorResultMatchers.exception;
+import static com.hotelmanager.testutil.ErrorResultMatchers.validationError;
 import static com.hotelmanager.validation.ValidationMessages.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WithMockUser(username = "john")
+@Sql(scripts = "/db/room_types.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@WithMockUser(username = "testUser", roles = {"MANAGER"})
 @SpringBootTest
 @AutoConfigureMockMvc
 class RoomControllerTest extends IntegrationBaseTest {
@@ -37,12 +39,11 @@ class RoomControllerTest extends IntegrationBaseTest {
     private static final UUID RANDOM_ID = UUID.randomUUID();
     private static final String ROOM_NUMBER_FIELD = "roomNumber";
     private static final String ROOM_TYPE_FIELD = "roomType";
-    private static final String CAPACITY_FIELD = "capacity";
     private static final String BED_TYPES_FIELD = "bedTypes";
-    private static final String PRICE_PER_NIGHT_FIELD = "pricePerNight";
-    private static final String DESCRIPTION_FIELD = "description";
     private static final String ROOM_STATUS_FIELD = "roomStatus";
     private static final String PAGINATION_RESULT_PREFIX = ".records[0]";
+    private static final String STANDARD_SINGLE_ROOM_UUID = "fcf4ed3a-00f0-4187-841c-8960dc3b07f5";
+    private static final String STANDARD_DOUBLE_ROOM_UUID = "e5a9aead-0b4e-4bbd-9fb1-92b424f55b6c";
 
     @Autowired
     private MockMvc mockMvc;
@@ -54,7 +55,19 @@ class RoomControllerTest extends IntegrationBaseTest {
     private RoomService roomService;
 
     @Test
-    @DisplayName("Should return 400 if roomNumber is negative or invalid")
+    @DisplayName("Should return 200 when room is created")
+    void testCreateRoomSuccessfully() throws Exception {
+        RoomCreationDto dto = buildValidRoomDto();
+
+        this.mockMvc.perform(post("/rooms")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Location"));
+    }
+
+    @Test
+    @DisplayName("Should return 400 when roomNumber is negative or invalid")
     void testCreateRoomWithInvalidRoomNumber() throws Exception {
         RoomCreationDto dto = buildValidRoomDto();
         dto.setRoomNumber(null);
@@ -62,11 +75,11 @@ class RoomControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/rooms")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(ROOM_NUMBER_FIELD, ROOM_NUMBER_REQUIRED));
+                .andExpectAll(validationError(ROOM_NUMBER_FIELD, ROOM_NUMBER_REQUIRED));
     }
 
     @Test
-    @DisplayName("Should return 400 if roomNumber is negative or invalid")
+    @DisplayName("Should return 400 when roomNumber is negative or invalid")
     void testCreateRoomWithNegativeRoomNumber() throws Exception {
         RoomCreationDto dto = buildValidRoomDto();
         dto.setRoomNumber("-1");
@@ -74,11 +87,11 @@ class RoomControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/rooms")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(ROOM_NUMBER_FIELD, ROOM_NUMBER_POSITIVE));
+                .andExpectAll(validationError(ROOM_NUMBER_FIELD, ROOM_NUMBER_POSITIVE));
     }
 
     @Test
-    @DisplayName("Should return 400 if roomNumber exceeds 10 digits")
+    @DisplayName("Should return 400 when roomNumber exceeds 10 digits")
     void testCreateRoomWithTooLongRoomNumber() throws Exception {
         RoomCreationDto dto = buildValidRoomDto();
         dto.setRoomNumber("12345678901");
@@ -86,11 +99,24 @@ class RoomControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/rooms")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(ROOM_NUMBER_FIELD, ROOM_NUMBER_MAX));
+                .andExpectAll(validationError(ROOM_NUMBER_FIELD, ROOM_NUMBER_MAX));
     }
 
     @Test
-    @DisplayName("Should return 400 if roomType is null")
+    @DisplayName("Should return 400 when roomNumber already exists")
+    void testCreateRoomWithExistingRoomNumber() throws Exception {
+        createMultipleRooms(1);
+        RoomCreationDto dto = buildValidRoomDto();
+
+        this.mockMvc.perform(post("/rooms")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest())
+                .andExpectAll(exception("BAD_REQUEST", ROOM_NUMBER_EXISTS.formatted(dto.getRoomNumber())));
+    }
+
+    @Test
+    @DisplayName("Should return 400 when roomType is null")
     void testCreateRoomWithNullRoomType() throws Exception {
         RoomCreationDto dto = buildValidRoomDto();
         dto.setRoomType(null);
@@ -98,30 +124,11 @@ class RoomControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/rooms")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(ROOM_TYPE_FIELD, ROOM_TYPE_REQUIRED));
+                .andExpectAll(validationError(ROOM_TYPE_FIELD, ROOM_TYPE_REQUIRED));
     }
 
     @Test
-    @DisplayName("Should return 400 if capacity is greater than 9 or non-positive")
-    void testCreateRoomWithInvalidCapacity() throws Exception {
-        RoomCreationDto dto = buildValidRoomDto();
-        dto.setCapacity(0);
-
-        this.mockMvc.perform(post("/rooms")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(CAPACITY_FIELD, CAPACITY_POSITIVE));
-
-        dto.setCapacity(10);
-
-        this.mockMvc.perform(post("/rooms")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(CAPACITY_FIELD, CAPACITY_MAX));
-    }
-
-    @Test
-    @DisplayName("Should return 400 if bedTypes is null")
+    @DisplayName("Should return 400 when bedTypes is null")
     void testCreateRoomWithNullBedType() throws Exception {
         RoomCreationDto dto = buildValidRoomDto();
         dto.setBedTypes(null);
@@ -129,62 +136,11 @@ class RoomControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/rooms")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(BED_TYPES_FIELD, BED_TYPES_REQUIRED));
-    }
-
-    private static ResultMatcher[] expectGetAllRooms(String prefix, RoomResponseDto room) {
-        return new ResultMatcher[]{
-                status().isOk(),
-                jsonPath("$" + prefix + ".uuid").value(room.getUuid().toString()),
-                jsonPath("$" + prefix + ".roomNumber").value(room.getRoomNumber()),
-                jsonPath("$" + prefix + ".roomType").value(room.getRoomType().toString()),
-                jsonPath("$" + prefix + ".capacity").value(room.getCapacity()),
-                jsonPath("$" + prefix + ".bedTypes").isArray(),
-                jsonPath("$" + prefix + ".bedTypes[0]").value(room.getBedTypes().getFirst().toString()),
-                jsonPath("$" + prefix + ".pricePerNight").value(room.getPricePerNight()),
-                jsonPath("$" + prefix + ".description").value(room.getDescription()),
-                jsonPath("$" + prefix + ".roomStatus").value(room.getRoomStatus().toString())
-        };
+                .andExpectAll(validationError(BED_TYPES_FIELD, BED_TYPES_REQUIRED));
     }
 
     @Test
-    @DisplayName("Should return 400 if pricePerNight is null")
-    void testCreateRoomWithNullPricePerNight() throws Exception {
-        RoomCreationDto dto = buildValidRoomDto();
-        dto.setPricePerNight(null);
-
-        this.mockMvc.perform(post("/rooms")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(PRICE_PER_NIGHT_FIELD, PRICE_PER_NIGHT_REQUIRED));
-    }
-
-    @Test
-    @DisplayName("Should return 400 if pricePerNight is non-positive")
-    void testCreateRoomWithZeroPricePerNight() throws Exception {
-        RoomCreationDto dto = buildValidRoomDto();
-        dto.setPricePerNight(BigDecimal.ZERO);
-
-        this.mockMvc.perform(post("/rooms")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(PRICE_PER_NIGHT_FIELD, PRICE_PER_NIGHT_POSITIVE));
-    }
-
-    @Test
-    @DisplayName("Should return 400 if pricePerNight is too long")
-    void testCreateRoomWithTooLongPricePerNight() throws Exception {
-        RoomCreationDto dto = buildValidRoomDto();
-        dto.setPricePerNight(BigDecimal.valueOf(12345678912.123));
-
-        this.mockMvc.perform(post("/rooms")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(PRICE_PER_NIGHT_FIELD, PRICE_PER_NIGHT_MONETARY));
-    }
-
-    @Test
-    @DisplayName("Should return 400 if bedTypes is empty")
+    @DisplayName("Should return 400 when bedTypes is empty")
     void testCreateRoomWithEmptyBedTypes() throws Exception {
         RoomCreationDto dto = buildValidRoomDto();
         dto.setBedTypes(List.of());
@@ -192,23 +148,11 @@ class RoomControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/rooms")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(BED_TYPES_FIELD, BED_TYPES_MORE_THAN_ONE));
+                .andExpectAll(validationError(BED_TYPES_FIELD, BED_TYPES_MORE_THAN_ONE));
     }
 
     @Test
-    @DisplayName("Should return 400 if description exceeds 3000 characters")
-    void testCreateRoomWithTooLongDescription() throws Exception {
-        RoomCreationDto dto = buildValidRoomDto();
-        dto.setDescription("A".repeat(3001));
-
-        this.mockMvc.perform(post("/rooms")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(DESCRIPTION_FIELD, DESCRIPTION_MAX_LENGTH));
-    }
-
-    @Test
-    @DisplayName("Should return 400 if roomStatus is null")
+    @DisplayName("Should return 400 when roomStatus is null")
     void testCreateRoomWithNullRoomStatus() throws Exception {
         RoomCreationDto dto = buildValidRoomDto();
         dto.setRoomStatus(null);
@@ -216,10 +160,9 @@ class RoomControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/rooms")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(ROOM_STATUS_FIELD, ROOM_STATUS_REQUIRED));
+                .andExpectAll(validationError(ROOM_STATUS_FIELD, ROOM_STATUS_REQUIRED));
     }
 
-    @WithMockUser(username = "john", roles = {"MANAGER"})
     @Test
     @DisplayName("Should return 404 when invalid room id passed")
     void testUpdateRoomThrowsException() throws Exception {
@@ -243,7 +186,7 @@ class RoomControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(put("/rooms/{id}", RANDOM_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(ROOM_NUMBER_FIELD, ROOM_NUMBER_REQUIRED));
+                .andExpectAll(validationError(ROOM_NUMBER_FIELD, ROOM_NUMBER_REQUIRED));
     }
 
     @Test
@@ -255,7 +198,7 @@ class RoomControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(put("/rooms/{id}", RANDOM_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(ROOM_NUMBER_FIELD, ROOM_NUMBER_POSITIVE));
+                .andExpectAll(validationError(ROOM_NUMBER_FIELD, ROOM_NUMBER_POSITIVE));
     }
 
     @Test
@@ -267,43 +210,52 @@ class RoomControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(put("/rooms/{id}", RANDOM_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(ROOM_NUMBER_FIELD, ROOM_NUMBER_MAX));
+                .andExpectAll(validationError(ROOM_NUMBER_FIELD, ROOM_NUMBER_MAX));
+    }
+
+    @Test
+    @DisplayName("Should return 400 when room number already exists")
+    void testUpdateRoomNumberWithExisting() throws Exception {
+        UUID roomId = this.roomService.createRoom(buildValidRoomDto()).getUuid();
+
+        RoomCreationDto secondRoom = buildValidRoomDto();
+        secondRoom.setRoomNumber("102");
+        this.roomService.createRoom(secondRoom);
+
+        RoomUpdateDto dto = buildValidRoomUpdateDto();
+        dto.setRoomNumber("102");
+
+        this.mockMvc.perform(put("/rooms/{id}", roomId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest())
+                .andExpectAll(exception("BAD_REQUEST", ROOM_NUMBER_EXISTS.formatted(dto.getRoomNumber())));
     }
 
     @Test
     @DisplayName("Should return 400 when room type is null")
-    void testUpdateRoomWithRoomTypeTypeNull() throws Exception {
+    void testUpdateRoomWithRoomTypeNull() throws Exception {
         RoomUpdateDto dto = buildValidRoomUpdateDto();
         dto.setRoomType(null);
 
         this.mockMvc.perform(put("/rooms/{id}", RANDOM_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(ROOM_TYPE_FIELD, ROOM_TYPE_REQUIRED));
+                .andExpectAll(validationError(ROOM_TYPE_FIELD, ROOM_TYPE_REQUIRED));
     }
 
     @Test
-    @DisplayName("Should return 400 when capacity is negative")
-    void testUpdateRoomWithNegativeCapacity() throws Exception {
+    @DisplayName("Should return 400 when room type is invalid")
+    void testUpdateRoomWithInvalidRoomType() throws Exception {
+        UUID roomId = this.roomService.createRoom(buildValidRoomDto()).getUuid();
         RoomUpdateDto dto = buildValidRoomUpdateDto();
-        dto.setCapacity(-1);
+        dto.setRoomType("SINGLE");
 
-        this.mockMvc.perform(put("/rooms/{id}", RANDOM_ID)
+        this.mockMvc.perform(put("/rooms/{id}", roomId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(CAPACITY_FIELD, CAPACITY_POSITIVE));
-    }
-
-    @Test
-    @DisplayName("Should return 400 when capacity is more than 10")
-    void testUpdateRoomWithTooBigCapacity() throws Exception {
-        RoomUpdateDto dto = buildValidRoomUpdateDto();
-        dto.setCapacity(10);
-
-        this.mockMvc.perform(put("/rooms/{id}", RANDOM_ID)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(CAPACITY_FIELD, CAPACITY_MAX));
+                .andExpect(status().isBadRequest())
+                .andExpectAll(exception("BAD_REQUEST", ROOM_TYPE_NOT_FOUND));
     }
 
     @Test
@@ -315,7 +267,7 @@ class RoomControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(put("/rooms/{id}", RANDOM_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(BED_TYPES_FIELD, BED_TYPES_REQUIRED));
+                .andExpectAll(validationError(BED_TYPES_FIELD, BED_TYPES_REQUIRED));
     }
 
     @Test
@@ -327,55 +279,7 @@ class RoomControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(put("/rooms/{id}", RANDOM_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(BED_TYPES_FIELD, BED_TYPES_MORE_THAN_ONE));
-    }
-
-    @Test
-    @DisplayName("Should return 400 when price per night is null")
-    void testUpdateRoomWithPricePerNightNull() throws Exception {
-        RoomUpdateDto dto = buildValidRoomUpdateDto();
-        dto.setPricePerNight(null);
-
-        this.mockMvc.perform(put("/rooms/{id}", RANDOM_ID)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(PRICE_PER_NIGHT_FIELD, PRICE_PER_NIGHT_REQUIRED));
-    }
-
-    @Test
-    @DisplayName("Should return 400 when price per night is negative")
-    void testUpdateRoomWithNegativePricePerNight() throws Exception {
-        RoomUpdateDto dto = buildValidRoomUpdateDto();
-        dto.setPricePerNight(BigDecimal.valueOf(-1.2));
-
-        this.mockMvc.perform(put("/rooms/{id}", RANDOM_ID)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(PRICE_PER_NIGHT_FIELD, PRICE_PER_NIGHT_POSITIVE));
-    }
-
-    @Test
-    @DisplayName("Should return 400 when price per night is too long")
-    void testUpdateRoomWithTooLongPricePerNight() throws Exception {
-        RoomUpdateDto dto = buildValidRoomUpdateDto();
-        dto.setPricePerNight(BigDecimal.valueOf(12345678912.123));
-
-        this.mockMvc.perform(put("/rooms/{id}", RANDOM_ID)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(PRICE_PER_NIGHT_FIELD, PRICE_PER_NIGHT_MONETARY));
-    }
-
-    @Test
-    @DisplayName("Should return 400 when description is too long")
-    void testUpdateRoomWithTooLongDescription() throws Exception {
-        RoomUpdateDto dto = buildValidRoomUpdateDto();
-        dto.setDescription("a".repeat(3001));
-
-        this.mockMvc.perform(put("/rooms/{id}", RANDOM_ID)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(DESCRIPTION_FIELD, DESCRIPTION_MAX_LENGTH));
+                .andExpectAll(validationError(BED_TYPES_FIELD, BED_TYPES_MORE_THAN_ONE));
     }
 
     @Test
@@ -387,10 +291,9 @@ class RoomControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(put("/rooms/{id}", RANDOM_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(ROOM_STATUS_FIELD, ROOM_STATUS_REQUIRED));
+                .andExpectAll(validationError(ROOM_STATUS_FIELD, ROOM_STATUS_REQUIRED));
     }
 
-    @WithMockUser(username = "john", roles = {"MANAGER"})
     @Test
     @DisplayName("Should return 200 and updated room for valid updates")
     void testUpdateValidRoom() throws Exception {
@@ -403,16 +306,15 @@ class RoomControllerTest extends IntegrationBaseTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.uuid").value(roomId.toString()))
                 .andExpect(jsonPath("$.roomNumber").value(dto.getRoomNumber()))
-                .andExpect(jsonPath("$.roomType").value(dto.getRoomType().toString()))
-                .andExpect(jsonPath("$.capacity").value(dto.getCapacity()))
+                .andExpect(jsonPath("$.roomType").value(dto.getRoomType()))
+                .andExpect(jsonPath("$.capacity").isNotEmpty())
                 .andExpect(jsonPath("$.bedTypes").isArray())
                 .andExpect(jsonPath("$.bedTypes[0]").value(dto.getBedTypes().getFirst().toString()))
-                .andExpect(jsonPath("$.pricePerNight").value(dto.getPricePerNight()))
-                .andExpect(jsonPath("$.description").value(dto.getDescription()))
+                .andExpect(jsonPath("$.pricePerNight").isNotEmpty())
+                .andExpect(jsonPath("$.description").isNotEmpty())
                 .andExpect(jsonPath("$.roomStatus").value(dto.getRoomStatus().toString()));
     }
 
-    @WithMockUser(username = "john", roles = {"MANAGER"})
     @Test
     @DisplayName("Should return 201 and Location header for a valid room")
     void testCreateRoomSuccessful() throws Exception {
@@ -454,7 +356,7 @@ class RoomControllerTest extends IntegrationBaseTest {
 
         this.mockMvc.perform(get("/rooms")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param(ROOM_TYPE_FIELD, RoomType.DOUBLE.toString())
+                        .param(ROOM_TYPE_FIELD, UUID.randomUUID().toString())
                         .param(ROOM_STATUS_FIELD, RoomStatus.CLEANING.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.records").isArray())
@@ -468,7 +370,7 @@ class RoomControllerTest extends IntegrationBaseTest {
 
         this.mockMvc.perform(get("/rooms")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param(ROOM_TYPE_FIELD, RoomType.SINGLE.toString())
+                        .param(ROOM_TYPE_FIELD, STANDARD_DOUBLE_ROOM_UUID)
                         .param(ROOM_STATUS_FIELD, RoomStatus.AVAILABLE.toString()))
                 .andExpectAll(expectGetAllRooms(PAGINATION_RESULT_PREFIX, room));
     }
@@ -481,7 +383,7 @@ class RoomControllerTest extends IntegrationBaseTest {
 
         this.mockMvc.perform(get("/rooms")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param(ROOM_TYPE_FIELD, RoomType.SINGLE.toString())
+                        .param(ROOM_TYPE_FIELD, STANDARD_DOUBLE_ROOM_UUID)
                         .param(ROOM_STATUS_FIELD, RoomStatus.AVAILABLE.toString())
                         .param("page", "5")
                         .param("size", String.valueOf(size)))
@@ -500,7 +402,7 @@ class RoomControllerTest extends IntegrationBaseTest {
 
         this.mockMvc.perform(get("/rooms")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param(ROOM_TYPE_FIELD, RoomType.SINGLE.toString())
+                        .param(ROOM_TYPE_FIELD, STANDARD_DOUBLE_ROOM_UUID)
                         .param(ROOM_STATUS_FIELD, RoomStatus.AVAILABLE.toString())
                         .param("page", String.valueOf(page))
                         .param("size", String.valueOf(size)))
@@ -517,7 +419,7 @@ class RoomControllerTest extends IntegrationBaseTest {
 
         this.mockMvc.perform(get("/rooms")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param(ROOM_TYPE_FIELD, RoomType.DOUBLE.toString()))
+                        .param(ROOM_TYPE_FIELD, STANDARD_SINGLE_ROOM_UUID))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.records").isArray())
                 .andExpect(jsonPath("$.records").isEmpty());
@@ -531,7 +433,7 @@ class RoomControllerTest extends IntegrationBaseTest {
 
         this.mockMvc.perform(get("/rooms")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param(ROOM_TYPE_FIELD, RoomType.SINGLE.toString())
+                        .param(ROOM_TYPE_FIELD, STANDARD_DOUBLE_ROOM_UUID)
                         .param("page", "5")
                         .param("size", String.valueOf(size)))
                 .andExpect(status().isBadRequest())
@@ -549,7 +451,7 @@ class RoomControllerTest extends IntegrationBaseTest {
 
         this.mockMvc.perform(get("/rooms")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param(ROOM_TYPE_FIELD, RoomType.SINGLE.toString())
+                        .param(ROOM_TYPE_FIELD, STANDARD_DOUBLE_ROOM_UUID)
                         .param("page", String.valueOf(page))
                         .param("size", String.valueOf(size)))
                 .andExpect(status().isOk())
@@ -565,7 +467,7 @@ class RoomControllerTest extends IntegrationBaseTest {
 
         this.mockMvc.perform(get("/rooms")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .param(ROOM_TYPE_FIELD, RoomType.SINGLE.toString()))
+                        .param(ROOM_TYPE_FIELD, STANDARD_DOUBLE_ROOM_UUID))
                 .andExpectAll(expectGetAllRooms(PAGINATION_RESULT_PREFIX, room));
     }
 
@@ -671,16 +573,6 @@ class RoomControllerTest extends IntegrationBaseTest {
                 .andExpect(jsonPath("$.records").isEmpty());
     }
 
-    private static ResultMatcher[] expectValidationError(String field, String expectedMessage) {
-        return new ResultMatcher[]{
-                status().isBadRequest(),
-                jsonPath("$.status").value("BAD_REQUEST"),
-                jsonPath("$.message").value("Validation error"),
-                jsonPath("$.fieldErrors[0].field").value(field),
-                jsonPath("$.fieldErrors[0].message").value(expectedMessage)
-        };
-    }
-
     @Test
     @DisplayName("Should return 200 and pagination result with one record")
     void testGetAllRoomsWithoutParams() throws Exception {
@@ -691,7 +583,6 @@ class RoomControllerTest extends IntegrationBaseTest {
                 .andExpectAll(expectGetAllRooms(PAGINATION_RESULT_PREFIX, room));
     }
 
-    @WithMockUser(username = "john", roles = {"MANAGER"})
     @Test
     @DisplayName("Should return 404 when delete room by missing id")
     void testDeleteRoomByIdWithInvalidId() throws Exception {
@@ -703,7 +594,6 @@ class RoomControllerTest extends IntegrationBaseTest {
                 .andExpect(jsonPath("$.message").value(ROOM_NOT_FOUND_ID + RANDOM_ID));
     }
 
-    @WithMockUser(username = "john", roles = {"MANAGER"})
     @Test
     @DisplayName("Should return 200 when delete room by valid id")
     void testDeleteRoomById() throws Exception {
@@ -712,6 +602,21 @@ class RoomControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(delete("/rooms/{id}", room.getUuid())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
+    }
+
+    private static ResultMatcher[] expectGetAllRooms(String prefix, RoomResponseDto room) {
+        return new ResultMatcher[]{
+                status().isOk(),
+                jsonPath("$" + prefix + ".uuid").value(room.getUuid().toString()),
+                jsonPath("$" + prefix + ".roomNumber").value(room.getRoomNumber()),
+                jsonPath("$" + prefix + ".roomType").value(room.getRoomType()),
+                jsonPath("$" + prefix + ".capacity").isNotEmpty(),
+                jsonPath("$" + prefix + ".bedTypes").isArray(),
+                jsonPath("$" + prefix + ".bedTypes[0]").value(room.getBedTypes().getFirst()),
+                jsonPath("$" + prefix + ".pricePerNight").isNotEmpty(),
+                jsonPath("$" + prefix + ".description").isNotEmpty(),
+                jsonPath("$" + prefix + ".roomStatus").value(room.getRoomStatus().toString())
+        };
     }
 
     private void createMultipleRooms(int count) {
@@ -727,11 +632,8 @@ class RoomControllerTest extends IntegrationBaseTest {
     private RoomCreationDto buildValidRoomDto() {
         return RoomCreationDto.builder()
                 .roomNumber("101")
-                .roomType(RoomType.SINGLE)
-                .capacity(2)
+                .roomType("STANDARD_DOUBLE_ROOM")
                 .bedTypes(List.of(BedType.SINGLE))
-                .pricePerNight(BigDecimal.valueOf(120.00))
-                .description("Valid room description")
                 .roomStatus(RoomStatus.AVAILABLE)
                 .build();
     }
@@ -739,11 +641,8 @@ class RoomControllerTest extends IntegrationBaseTest {
     private RoomUpdateDto buildValidRoomUpdateDto() {
         return RoomUpdateDto.builder()
                 .roomNumber("105")
-                .roomType(RoomType.DOUBLE)
-                .capacity(5)
-                .bedTypes(List.of(BedType.DOUBLE))
-                .pricePerNight(BigDecimal.valueOf(100.00))
-                .description("Valid update room description")
+                .roomType("DELUXE_DOUBLE_APARTMENT")
+                .bedTypes(List.of(BedType.DOUBLE, BedType.DOUBLE))
                 .roomStatus(RoomStatus.CLEANING)
                 .build();
     }
