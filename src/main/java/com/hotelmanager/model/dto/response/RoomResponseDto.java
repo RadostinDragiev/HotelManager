@@ -1,9 +1,7 @@
 package com.hotelmanager.model.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.hotelmanager.model.enums.BedType;
 import com.hotelmanager.model.enums.RoomStatus;
-import com.hotelmanager.model.enums.RoomType;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -20,9 +18,9 @@ public class RoomResponseDto {
 
     private UUID uuid;
     private String roomNumber;
-    private RoomType roomType;
+    private String roomType;
     private int capacity;
-    private List<BedType> bedTypes;
+    private List<String> bedTypes;
     private BigDecimal pricePerNight;
     private String description;
     private RoomStatus roomStatus;

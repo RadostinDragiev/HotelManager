@@ -109,6 +109,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public User getAuthenticationUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return this.userRepository.findByUsername(auth.getName())
+                .orElseThrow(() -> new UsernameNotFoundException(NO_USER_FOUND_BY_USERNAME));
+    }
+
+    @Override
     public void deactivateUser(String id) {
         User user = this.userRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new UserNotFoundException(NO_USER_FOUND_BY_ID));
@@ -124,11 +131,5 @@ public class UserServiceImpl implements UserService {
         }
 
         return roles;
-    }
-
-    private User getAuthenticationUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return this.userRepository.findByUsername(auth.getName())
-                .orElseThrow(() -> new UsernameNotFoundException(NO_USER_FOUND_BY_USERNAME));
     }
 }

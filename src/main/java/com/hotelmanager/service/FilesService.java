@@ -2,6 +2,7 @@ package com.hotelmanager.service;
 
 import com.hotelmanager.config.FeignConfiguration;
 import com.hotelmanager.model.dto.feign.RoomPhotoDto;
+import com.hotelmanager.model.dto.feign.RoomTypePhotoDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -25,15 +26,21 @@ public interface FilesService {
     @GetMapping("/room/{roomId}")
     List<RoomPhotoDto> getPhotosByRoom(@PathVariable String roomId);
 
-    @GetMapping("/room-type/{roomTypeId}")
-    List<RoomPhotoDto> getPhotosByRoomType(@PathVariable String roomTypeId);
-
     @DeleteMapping("/{publicId}")
     void deletePhoto(@PathVariable String publicId);
 
     @DeleteMapping("/room/{roomId}")
     void deletePhotoByRoom(@PathVariable String roomId);
 
+    @PostMapping(value = "/room-type/{roomTypeId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    List<RoomTypePhotoDto> uploadRoomTypeImages(@PathVariable String roomTypeId, @RequestPart("images") MultipartFile[] images);
+
+    @GetMapping("/room-type/{roomTypeId}")
+    List<RoomTypePhotoDto> getPhotosByRoomType(@PathVariable String roomTypeId);
+
+    @DeleteMapping("/room-type/{publicId}")
+    void getRoomTypePhotoById(@PathVariable String publicId);
+
     @DeleteMapping("/room-type/{roomTypeId}")
-    void deletePhotoByRoomType(@PathVariable String roomTypeId);
+    void deleteRoomTypePhotosByRoomType(@PathVariable String roomTypeId);
 }
