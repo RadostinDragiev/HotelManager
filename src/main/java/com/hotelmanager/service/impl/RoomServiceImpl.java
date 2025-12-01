@@ -24,7 +24,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,7 +63,7 @@ public class RoomServiceImpl implements RoomService {
         newRoom.setCreatedBy(user);
 
         Room createdRoom = this.roomRepository.save(newRoom);
-        return buildRoomResponse(createdRoom, List.of());
+        return buildRoomResponse(createdRoom, List.of(), List.of());
     }
 
     @Override
@@ -88,7 +90,7 @@ public class RoomServiceImpl implements RoomService {
         }
 
         Room updatedRoom = this.roomRepository.save(existingRoom);
-        return buildRoomResponse(updatedRoom, List.of());
+        return buildRoomResponse(updatedRoom, List.of(), List.of());
     }
 
     @Transactional
@@ -98,9 +100,16 @@ public class RoomServiceImpl implements RoomService {
                 .orElseThrow(() -> new RoomNotFoundException(ROOM_NOT_FOUND_ID + id));
 
         List<RoomPhotoSummaryDto> photosByRoom = new ArrayList<>();
+        List<RoomPhotoSummaryDto> photosByType = new ArrayList<>();
         try {
             log.info("Fetch room '{}' pictures from files service", id);
             photosByRoom = this.filesService.getPhotosByRoom(room.getUuid().toString())
+                    .stream()
+                    .map(photo -> this.modelMapper.map(photo, RoomPhotoSummaryDto.class))
+                    .toList();
+
+            log.info("Fetch room type '{}' pictures from files service", room.getRoomType().getName());
+            photosByType = this.filesService.getPhotosByRoomType(room.getRoomType().getUuid().toString())
                     .stream()
                     .map(photo -> this.modelMapper.map(photo, RoomPhotoSummaryDto.class))
                     .toList();
@@ -108,20 +117,26 @@ public class RoomServiceImpl implements RoomService {
             log.warn("Failed to fetch pictures for room '{}': ", id, e);
         }
 
-        return buildRoomResponse(room, photosByRoom);
+        return buildRoomResponse(room, photosByRoom, photosByType);
     }
 
     @Transactional
     @Override
     public Page<RoomPageResponseDto> getAllRooms(Optional<UUID> roomType, Optional<RoomStatus> roomStatus, Pageable pageable) {
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.ASC, "roomNumber")
+        );
+
         Specification<Room> spec = Specification.allOf(
                 roomType.map(RoomSpecifications::byRoomType).orElse(null),
                 roomStatus.map(RoomSpecifications::byRoomStatus).orElse(null)
         );
 
-        Page<Room> rooms = roomRepository.findAll(spec, pageable);
+        Page<Room> rooms = roomRepository.findAll(spec, sortedPageable);
 
-        PageableValidator.validatePageRequest(rooms, pageable);
+        PageableValidator.validatePageRequest(rooms, sortedPageable);
 
         return rooms.map(room -> {
             RoomType type = room.getRoomType();
@@ -160,7 +175,7 @@ public class RoomServiceImpl implements RoomService {
         }
     }
 
-    private RoomResponseDto buildRoomResponse(Room room, List<RoomPhotoSummaryDto> photos) {
+    private RoomResponseDto buildRoomResponse(Room room, List<RoomPhotoSummaryDto> photos, List<RoomPhotoSummaryDto> typePhotos) {
         RoomType roomType = room.getRoomType();
         List<String> bedTypes = room.getBedTypes().stream()
                 .map(Objects::toString)
@@ -178,6 +193,7 @@ public class RoomServiceImpl implements RoomService {
                 .createdAt(room.getCreatedDateTime())
                 .updatedAt(room.getUpdatedDateTime())
                 .photos(photos)
+                .roomTypePhotos(typePhotos)
                 .build();
     }
 }

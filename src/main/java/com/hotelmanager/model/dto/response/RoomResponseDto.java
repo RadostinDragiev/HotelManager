@@ -32,4 +32,5 @@ public class RoomResponseDto {
     private LocalDateTime updatedAt;
 
     private List<RoomPhotoSummaryDto> photos;
+    private List<RoomPhotoSummaryDto> roomTypePhotos;
 }
