@@ -23,6 +23,13 @@ import static com.hotelmanager.exception.ExceptionMessages.USER_UNAUTHORIZED;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(NotEnoughRoomsAvailableException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleNotEnoughRoomsAvailableException(NotEnoughRoomsAvailableException ex) {
+        log.error("Not enough rooms available! ", ex);
+
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
     @ExceptionHandler(RoomTypeAlreadyExistsException.class)
     public ResponseEntity<ExceptionErrorResponse> handleRoomTypeAlreadyExistsException(RoomTypeAlreadyExistsException ex) {
         log.error("Room type already exists! ", ex);

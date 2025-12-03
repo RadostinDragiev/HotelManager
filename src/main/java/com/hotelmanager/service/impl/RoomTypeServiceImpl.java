@@ -2,6 +2,7 @@ package com.hotelmanager.service.impl;
 
 import com.hotelmanager.exception.exceptions.RoomTypeAlreadyExistsException;
 import com.hotelmanager.exception.exceptions.RoomTypeNotFoundException;
+import com.hotelmanager.model.dto.RoomTypeAvailability;
 import com.hotelmanager.model.dto.request.RoomTypeCreationDto;
 import com.hotelmanager.model.dto.response.ImageResponseDto;
 import com.hotelmanager.model.dto.response.RoomTypeDto;
@@ -18,9 +19,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.hotelmanager.exception.ExceptionMessages.ROOM_TYPE_EXISTS;
 import static com.hotelmanager.exception.ExceptionMessages.ROOM_TYPE_NOT_FOUND;
@@ -78,6 +82,14 @@ public class RoomTypeServiceImpl implements RoomTypeService {
                     return roomTypeDto;
                 })
                 .toList();
+    }
+
+    @Override
+    public Map<String, RoomTypeAvailability> roomTypeAvailabilitiesMap(LocalDate startDate, LocalDate endDate) {
+        return this.roomTypeRepository
+                .availableRoomsByType(startDate, endDate)
+                .stream()
+                .collect(Collectors.toMap(RoomTypeAvailability::roomType, roomType -> roomType));
     }
 
     private List<ImageResponseDto> uploadImages(UUID roomTypeId, MultipartFile[] images) {
