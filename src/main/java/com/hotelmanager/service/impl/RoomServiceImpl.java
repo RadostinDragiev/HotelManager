@@ -155,6 +155,12 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
+    public Room getRoomEntityById(String roomId) {
+        return this.roomRepository.findById(UUID.fromString(roomId))
+                .orElseThrow(() -> new RoomNotFoundException(ROOM_NOT_FOUND_ID));
+    }
+
+    @Override
     public void deleteRoomById(String id) {
         if (!this.roomRepository.existsById(UUID.fromString(id))) {
             throw new RoomNotFoundException(ROOM_NOT_FOUND_ID + id);

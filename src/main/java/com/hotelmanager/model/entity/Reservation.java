@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -58,6 +59,9 @@ public class Reservation extends BaseUUIDEntity {
             inverseJoinColumns = @JoinColumn(name = "room_id")
     )
     private Set<Room> rooms;
+
+    @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Payment> payments;
 
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;

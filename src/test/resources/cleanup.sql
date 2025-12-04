@@ -1,3 +1,4 @@
+DELETE FROM payments;
 DELETE FROM reservations_room_types;
 DELETE FROM reservations_rooms;
 DELETE FROM reservations;

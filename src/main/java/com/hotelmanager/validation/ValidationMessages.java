@@ -52,6 +52,13 @@ public final class ValidationMessages {
     public static final String ROOMS_COUNT_ONLY_POSITIVE = "Rooms count must be positive!";
     public static final String ROOM_TYPE_NOT_NULL = "Room type cannot be null!";
 
+    public static final String AMOUNT_NOT_NULL = "Amount cannot be null!";
+    public static final String AMOUNT_ONLY_POSITIVE = "Amount must be positive!";
+    public static final String PAYMENT_TYPE_NOT_NULL = "Payment type cannot be null!";
+    public static final String REASON_NOT_NULL = "Reason cannot be null!";
+    public static final String PAYMENT_STATUS_NOT_NULL = "Payment status cannot be null!";
+    public static final String RESERVATION_ID_NOT_NULL = "Reservation id cannot be null!";
+
     private ValidationMessages() {
     }
 }

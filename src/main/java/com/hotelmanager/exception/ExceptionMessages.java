@@ -21,4 +21,6 @@ public final class ExceptionMessages {
     public static final String NEW_PASSWORDS_DOES_NOT_MATCH = "New password and confirm new password should match!";
 
     public static final String NOT_ENOUGH_ROOMS_AVAILABLE = "Not enough rooms of type %s available!";
+
+    public static final String RESERVATION_NOT_FOUND = "No reservation found by the provided id!";
 }

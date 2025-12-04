@@ -23,6 +23,13 @@ import static com.hotelmanager.exception.ExceptionMessages.USER_UNAUTHORIZED;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(ReservationNotFoundException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleReservationNotFoundException(ReservationNotFoundException ex) {
+        log.error("Reservation not found! ", ex);
+
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
     @ExceptionHandler(NotEnoughRoomsAvailableException.class)
     public ResponseEntity<ExceptionErrorResponse> handleNotEnoughRoomsAvailableException(NotEnoughRoomsAvailableException ex) {
         log.error("Not enough rooms available! ", ex);
