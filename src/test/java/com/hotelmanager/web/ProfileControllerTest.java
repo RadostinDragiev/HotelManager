@@ -11,10 +11,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultMatcher;
 
 import static com.hotelmanager.exception.ExceptionMessages.NEW_PASSWORDS_DOES_NOT_MATCH;
 import static com.hotelmanager.exception.ExceptionMessages.OLD_PASSWORD_DOES_NOT_MATCH;
+import static com.hotelmanager.testutil.ErrorResultMatchers.exception;
+import static com.hotelmanager.testutil.ErrorResultMatchers.validationError;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -34,6 +35,8 @@ class ProfileControllerTest extends IntegrationBaseTest {
     private static final String NEW_PASSWORD = "321resUtset";
     private static final int LOW_EDGE_PASSWORD_SIZE = 7;
     private static final int HIGH_EDGE_PASSWORD_SIZE = 51;
+
+    private static final String ERROR_STATUS = "BAD_REQUEST";
 
     @Autowired
     private MockMvc mockMvc;
@@ -77,7 +80,7 @@ class ProfileControllerTest extends IntegrationBaseTest {
                         .with(user(USERNAME))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectExceptionError(OLD_PASSWORD_DOES_NOT_MATCH));
+                .andExpectAll(exception(ERROR_STATUS, OLD_PASSWORD_DOES_NOT_MATCH));
     }
 
     @Test
@@ -90,7 +93,7 @@ class ProfileControllerTest extends IntegrationBaseTest {
                         .with(user(USERNAME))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectExceptionError(NEW_PASSWORDS_DOES_NOT_MATCH));
+                .andExpectAll(exception(ERROR_STATUS, NEW_PASSWORDS_DOES_NOT_MATCH));
     }
 
     @Test
@@ -103,7 +106,7 @@ class ProfileControllerTest extends IntegrationBaseTest {
                         .with(user(USERNAME))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectExceptionError(NEW_PASSWORDS_DOES_NOT_MATCH));
+                .andExpectAll(exception(ERROR_STATUS, NEW_PASSWORDS_DOES_NOT_MATCH));
     }
 
     @Test
@@ -116,7 +119,7 @@ class ProfileControllerTest extends IntegrationBaseTest {
                         .with(user(USERNAME))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError("oldPassword"));
+                .andExpectAll(validationError("oldPassword", ValidationMessages.PASSWORD_SIZE));
     }
 
     @Test
@@ -129,7 +132,7 @@ class ProfileControllerTest extends IntegrationBaseTest {
                         .with(user(USERNAME))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError("oldPassword"));
+                .andExpectAll(validationError("oldPassword", ValidationMessages.PASSWORD_SIZE));
     }
 
     @Test
@@ -142,7 +145,7 @@ class ProfileControllerTest extends IntegrationBaseTest {
                         .with(user(USERNAME))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError("oldPassword"));
+                .andExpectAll(validationError("oldPassword", ValidationMessages.PASSWORD_SIZE));
     }
 
     @Test
@@ -155,7 +158,7 @@ class ProfileControllerTest extends IntegrationBaseTest {
                         .with(user(USERNAME))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError("newPassword"));
+                .andExpectAll(validationError("newPassword", ValidationMessages.PASSWORD_SIZE));
     }
 
     @Test
@@ -168,7 +171,7 @@ class ProfileControllerTest extends IntegrationBaseTest {
                         .with(user(USERNAME))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError("newPassword"));
+                .andExpectAll(validationError("newPassword", ValidationMessages.PASSWORD_SIZE));
     }
 
     @Test
@@ -181,7 +184,7 @@ class ProfileControllerTest extends IntegrationBaseTest {
                         .with(user(USERNAME))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError("newPassword"));
+                .andExpectAll(validationError("newPassword", ValidationMessages.PASSWORD_SIZE));
     }
 
     @Test
@@ -194,7 +197,7 @@ class ProfileControllerTest extends IntegrationBaseTest {
                         .with(user(USERNAME))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError("confirmNewPassword"));
+                .andExpectAll(validationError("confirmNewPassword", ValidationMessages.PASSWORD_SIZE));
     }
 
     @Test
@@ -207,7 +210,7 @@ class ProfileControllerTest extends IntegrationBaseTest {
                         .with(user(USERNAME))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError("confirmNewPassword"));
+                .andExpectAll(validationError("confirmNewPassword", ValidationMessages.PASSWORD_SIZE));
     }
 
     @Test
@@ -220,26 +223,7 @@ class ProfileControllerTest extends IntegrationBaseTest {
                         .with(user(USERNAME))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError("confirmNewPassword"));
-    }
-
-    private static ResultMatcher[] expectExceptionError(String expectedMessage) {
-        return new ResultMatcher[]{
-                status().isBadRequest(),
-                jsonPath("$.status").value("BAD_REQUEST"),
-                jsonPath("$.timestamp").isNotEmpty(),
-                jsonPath("$.message").value(expectedMessage)
-        };
-    }
-
-    private static ResultMatcher[] expectValidationError(String field) {
-        return new ResultMatcher[]{
-                status().isBadRequest(),
-                jsonPath("$.status").value("BAD_REQUEST"),
-                jsonPath("$.message").value("Validation error"),
-                jsonPath("$.fieldErrors[0].field").value(field),
-                jsonPath("$.fieldErrors[0].message").value(ValidationMessages.PASSWORD_SIZE)
-        };
+                .andExpectAll(validationError("confirmNewPassword", ValidationMessages.PASSWORD_SIZE));
     }
 
     private ProfilePasswordDto buildProfilePasswordDto() {

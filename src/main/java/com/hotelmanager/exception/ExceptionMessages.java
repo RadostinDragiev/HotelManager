@@ -8,6 +8,9 @@ public final class ExceptionMessages {
 
     public static final String USER_UNAUTHORIZED = "User is unauthorized to perform this action!";
     public static final String ROLE_NOT_FOUND = "Invalid role ids provided!";
+    public static final String ROOM_TYPE_NOT_FOUND = "Room type not found!";
+    public static final String ROOM_TYPE_EXISTS = "Room type already exists!";
+    public static final String ROOM_NUMBER_EXISTS = "Room with number %s already exists!";
 
     public static final String ROOM_NOT_FOUND_ID = "No room found by the provided id: ";
 

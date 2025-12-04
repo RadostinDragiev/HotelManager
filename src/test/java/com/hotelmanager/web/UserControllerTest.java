@@ -17,13 +17,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultMatcher;
 
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import static com.hotelmanager.exception.ExceptionMessages.*;
+import static com.hotelmanager.testutil.ErrorResultMatchers.exception;
+import static com.hotelmanager.testutil.ErrorResultMatchers.validationError;
 import static com.hotelmanager.validation.ValidationMessages.*;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -90,7 +91,7 @@ class UserControllerTest extends IntegrationBaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isBadRequest())
-                .andExpectAll(expectException("BAD_REQUEST", ROLE_NOT_FOUND));
+                .andExpectAll(exception("BAD_REQUEST", ROLE_NOT_FOUND));
     }
 
     @WithMockUser(username = "invalid", roles = {"MANAGER"})
@@ -103,7 +104,7 @@ class UserControllerTest extends IntegrationBaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isNotFound())
-                .andExpectAll(expectException("NOT_FOUND", NO_USER_FOUND_BY_USERNAME));
+                .andExpectAll(exception("NOT_FOUND", NO_USER_FOUND_BY_USERNAME));
     }
 
     @Test
@@ -115,7 +116,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(USERNAME_FIELD, UNIQUE_USERNAME));
+                .andExpectAll(validationError(USERNAME_FIELD, UNIQUE_USERNAME));
     }
 
     @Test
@@ -127,7 +128,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(USERNAME_FIELD, USERNAME_NOT_NULL));
+                .andExpectAll(validationError(USERNAME_FIELD, USERNAME_NOT_NULL));
     }
 
     @Test
@@ -139,7 +140,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(USERNAME_FIELD, USERNAME_SIZE));
+                .andExpectAll(validationError(USERNAME_FIELD, USERNAME_SIZE));
     }
 
     @Test
@@ -151,7 +152,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(USERNAME_FIELD, USERNAME_SIZE));
+                .andExpectAll(validationError(USERNAME_FIELD, USERNAME_SIZE));
     }
 
     @Test
@@ -163,7 +164,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(PASSWORD_FIELD, PASSWORD_NOT_NULL));
+                .andExpectAll(validationError(PASSWORD_FIELD, PASSWORD_NOT_NULL));
     }
 
     @Test
@@ -175,7 +176,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(PASSWORD_FIELD, PASSWORD_SIZE));
+                .andExpectAll(validationError(PASSWORD_FIELD, PASSWORD_SIZE));
     }
 
     @Test
@@ -187,7 +188,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(PASSWORD_FIELD, PASSWORD_SIZE));
+                .andExpectAll(validationError(PASSWORD_FIELD, PASSWORD_SIZE));
     }
 
     @Test
@@ -199,7 +200,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(EMAIL_FIELD, EMAIL_NOT_NULL));
+                .andExpectAll(validationError(EMAIL_FIELD, EMAIL_NOT_NULL));
     }
 
     @Test
@@ -211,7 +212,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(EMAIL_FIELD, VALID_EMAIL));
+                .andExpectAll(validationError(EMAIL_FIELD, VALID_EMAIL));
     }
 
     @Test
@@ -223,7 +224,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(FIRST_NAME_FIELD, FIRST_NAME_NOT_NULL));
+                .andExpectAll(validationError(FIRST_NAME_FIELD, FIRST_NAME_NOT_NULL));
     }
 
     @Test
@@ -235,7 +236,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(FIRST_NAME_FIELD, FIRST_NAME_SIZE));
+                .andExpectAll(validationError(FIRST_NAME_FIELD, FIRST_NAME_SIZE));
     }
 
     @Test
@@ -247,7 +248,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(FIRST_NAME_FIELD, FIRST_NAME_SIZE));
+                .andExpectAll(validationError(FIRST_NAME_FIELD, FIRST_NAME_SIZE));
     }
 
     @Test
@@ -259,7 +260,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(LAST_NAME_FIELD, LAST_NAME_NOT_NULL));
+                .andExpectAll(validationError(LAST_NAME_FIELD, LAST_NAME_NOT_NULL));
     }
 
     @Test
@@ -271,7 +272,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(LAST_NAME_FIELD, LAST_NAME_SIZE));
+                .andExpectAll(validationError(LAST_NAME_FIELD, LAST_NAME_SIZE));
     }
 
     @Test
@@ -283,7 +284,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(LAST_NAME_FIELD, LAST_NAME_SIZE));
+                .andExpectAll(validationError(LAST_NAME_FIELD, LAST_NAME_SIZE));
     }
 
     @Test
@@ -295,7 +296,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(POSITION_FIELD, POSITION_NOT_NULL));
+                .andExpectAll(validationError(POSITION_FIELD, POSITION_NOT_NULL));
     }
 
     @Test
@@ -307,7 +308,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(POSITION_FIELD, POSITION_SIZE));
+                .andExpectAll(validationError(POSITION_FIELD, POSITION_SIZE));
     }
 
     @Test
@@ -319,7 +320,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(POSITION_FIELD, POSITION_SIZE));
+                .andExpectAll(validationError(POSITION_FIELD, POSITION_SIZE));
     }
 
     @Test
@@ -331,7 +332,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(IS_ENABLED_FIELD, IS_ENABLED_NOT_NULL));
+                .andExpectAll(validationError(IS_ENABLED_FIELD, IS_ENABLED_NOT_NULL));
     }
 
     @Test
@@ -343,7 +344,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
-                .andExpectAll(expectValidationError(ROLES_FIELD, ROLES_NOT_EMPTY));
+                .andExpectAll(validationError(ROLES_FIELD, ROLES_NOT_EMPTY));
     }
 
     @ParameterizedTest
@@ -357,7 +358,7 @@ class UserControllerTest extends IntegrationBaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(this.objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isUnauthorized())
-                .andExpectAll(expectException("UNAUTHORIZED", USER_UNAUTHORIZED));
+                .andExpectAll(exception("UNAUTHORIZED", USER_UNAUTHORIZED));
     }
 
     @Test
@@ -419,7 +420,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(get("/users/{id}", userId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpectAll(expectException("BAD_REQUEST", NO_USER_FOUND_BY_ID));
+                .andExpectAll(exception("BAD_REQUEST", NO_USER_FOUND_BY_ID));
     }
 
     @ParameterizedTest
@@ -448,7 +449,7 @@ class UserControllerTest extends IntegrationBaseTest {
                         .with(user("unauthorizedUser").roles(role))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized())
-                .andExpectAll(expectException("UNAUTHORIZED", USER_UNAUTHORIZED));
+                .andExpectAll(exception("UNAUTHORIZED", USER_UNAUTHORIZED));
     }
 
     @Test
@@ -457,7 +458,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/users/{id}/activate", UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpectAll(expectException("BAD_REQUEST", NO_USER_FOUND_BY_ID));
+                .andExpectAll(exception("BAD_REQUEST", NO_USER_FOUND_BY_ID));
     }
 
     @ParameterizedTest
@@ -476,7 +477,7 @@ class UserControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(delete("/users/{id}", UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpectAll(expectException("BAD_REQUEST", NO_USER_FOUND_BY_ID));
+                .andExpectAll(exception("BAD_REQUEST", NO_USER_FOUND_BY_ID));
     }
 
     @ParameterizedTest
@@ -487,7 +488,7 @@ class UserControllerTest extends IntegrationBaseTest {
                         .with(user("unauthorizedUser").roles(role))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized())
-                .andExpectAll(expectException("UNAUTHORIZED", USER_UNAUTHORIZED));
+                .andExpectAll(exception("UNAUTHORIZED", USER_UNAUTHORIZED));
     }
 
     private UserDto buildValidUserDto() {
@@ -501,24 +502,6 @@ class UserControllerTest extends IntegrationBaseTest {
                 .isEnabled(IS_ENABLED)
                 .roles(Set.of(fetchRole()))
                 .build();
-    }
-
-    private static ResultMatcher[] expectValidationError(String field, String expectedMessage) {
-        return new ResultMatcher[]{
-                status().isBadRequest(),
-                jsonPath("$.status").value("BAD_REQUEST"),
-                jsonPath("$.message").value("Validation error"),
-                jsonPath("$.fieldErrors[0].field").value(field),
-                jsonPath("$.fieldErrors[0].message").value(expectedMessage)
-        };
-    }
-
-    private static ResultMatcher[] expectException(String status, String expectedMessage) {
-        return new ResultMatcher[]{
-                jsonPath("$.status").value(status),
-                jsonPath("$.timestamp").isNotEmpty(),
-                jsonPath("$.message").value(expectedMessage)
-        };
     }
 
     private UUID fetchRole() {

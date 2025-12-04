@@ -2,7 +2,6 @@ package com.hotelmanager.model.dto.response;
 
 import com.hotelmanager.model.enums.BedType;
 import com.hotelmanager.model.enums.RoomStatus;
-import com.hotelmanager.model.enums.RoomType;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -17,7 +16,7 @@ public class RoomPageResponseDto {
 
     private String uuid;
     private String roomNumber;
-    private RoomType roomType;
+    private String roomType;
     private int capacity;
     private List<BedType> bedTypes;
     private BigDecimal pricePerNight;

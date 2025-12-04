@@ -5,6 +5,7 @@ import com.hotelmanager.model.dto.request.UserDto;
 import com.hotelmanager.model.dto.response.ProfileDto;
 import com.hotelmanager.model.dto.response.UserDetailsDto;
 import com.hotelmanager.model.dto.response.UserPageDto;
+import com.hotelmanager.model.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -27,4 +28,6 @@ public interface UserService {
     void activateUser(String id);
 
     void deactivateUser(String id);
+
+    User getAuthenticationUser();
 }

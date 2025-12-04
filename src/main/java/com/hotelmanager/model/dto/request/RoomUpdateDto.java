@@ -2,11 +2,11 @@ package com.hotelmanager.model.dto.request;
 
 import com.hotelmanager.model.enums.BedType;
 import com.hotelmanager.model.enums.RoomStatus;
-import com.hotelmanager.model.enums.RoomType;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 import static com.hotelmanager.validation.ValidationMessages.*;
@@ -24,23 +24,11 @@ public class RoomUpdateDto {
     private String roomNumber;
 
     @NotNull(message = ROOM_TYPE_REQUIRED)
-    private RoomType roomType;
-
-    @Positive(message = CAPACITY_POSITIVE)
-    @Max(value = 9, message = CAPACITY_MAX)
-    private int capacity;
+    private String roomType;
 
     @NotNull(message = BED_TYPES_REQUIRED)
     @Size(min = 1, message = BED_TYPES_MORE_THAN_ONE)
     private List<BedType> bedTypes;
-
-    @NotNull(message = PRICE_PER_NIGHT_REQUIRED)
-    @DecimalMin(value = "0.0", inclusive = false, message = PRICE_PER_NIGHT_POSITIVE)
-    @Digits(integer = 10, fraction = 2, message = PRICE_PER_NIGHT_MONETARY)
-    private BigDecimal pricePerNight;
-
-    @Size(max = 3000, message = DESCRIPTION_MAX_LENGTH)
-    private String description;
 
     @NotNull(message = ROOM_STATUS_REQUIRED)
     private RoomStatus roomStatus;
