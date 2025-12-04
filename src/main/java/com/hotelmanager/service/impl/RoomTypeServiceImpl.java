@@ -6,6 +6,7 @@ import com.hotelmanager.model.dto.RoomTypeAvailability;
 import com.hotelmanager.model.dto.request.RoomTypeCreationDto;
 import com.hotelmanager.model.dto.response.ImageResponseDto;
 import com.hotelmanager.model.dto.response.RoomTypeDto;
+import com.hotelmanager.model.dto.response.RoomTypesPreview;
 import com.hotelmanager.model.entity.RoomType;
 import com.hotelmanager.repository.RoomTypeRepository;
 import com.hotelmanager.service.FilesService;
@@ -81,6 +82,13 @@ public class RoomTypeServiceImpl implements RoomTypeService {
                     roomTypeDto.setImages(images);
                     return roomTypeDto;
                 })
+                .toList();
+    }
+
+    @Override
+    public List<RoomTypesPreview> getTypesPreview() {
+        return this.roomTypeRepository.findAll().stream()
+                .map(roomType -> this.modelMapper.map(roomType, RoomTypesPreview.class))
                 .toList();
     }
 

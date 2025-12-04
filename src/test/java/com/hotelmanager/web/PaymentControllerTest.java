@@ -51,7 +51,6 @@ class PaymentControllerTest extends IntegrationBaseTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-
     @Test
     @DisplayName("Should return 201 when payment is created")
     void testCreatePaymentSuccessfully() throws Exception {
@@ -205,6 +204,7 @@ class PaymentControllerTest extends IntegrationBaseTest {
                 .email("valid@email.com")
                 .phone("+1234567890")
                 .guestsCount(2)
+                .reservationPaymentType(ReservationPaymentType.FULL_PREPAY)
                 .startDate(LocalDate.now())
                 .endDate(LocalDate.now().plusDays(3))
                 .rooms(List.of(reservationRoomDto))

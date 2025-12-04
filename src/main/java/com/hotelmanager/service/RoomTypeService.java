@@ -3,6 +3,7 @@ package com.hotelmanager.service;
 import com.hotelmanager.model.dto.RoomTypeAvailability;
 import com.hotelmanager.model.dto.request.RoomTypeCreationDto;
 import com.hotelmanager.model.dto.response.RoomTypeDto;
+import com.hotelmanager.model.dto.response.RoomTypesPreview;
 import com.hotelmanager.model.entity.RoomType;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,4 +20,6 @@ public interface RoomTypeService {
     Map<String, RoomTypeAvailability> roomTypeAvailabilitiesMap(LocalDate startDate, LocalDate endDate);
 
     List<RoomTypeDto> getAllTypes();
+
+    List<RoomTypesPreview> getTypesPreview();
 }

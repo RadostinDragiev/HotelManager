@@ -46,6 +46,7 @@ public final class ValidationMessages {
     public static final String START_DATE_BEFORE_END_DATE = "Start date must be before end date!";
     public static final String END_DATE_NOT_NULL = "End date cannot be null!";
     public static final String END_DATE_NOT_PAST = "End date cannot be in the past!";
+    public static final String RESERVATION_PAYMENT_TYPE_NOT_NULL = "Reservation payment type cannot be null!";
     public static final String ROOMS_LIST_NOT_EMPTY = "Rooms list cannot be empty!";
     public static final String GUESTS_COUNT_ONLY_POSITIVE = "Guests count cannot be null!";
 
