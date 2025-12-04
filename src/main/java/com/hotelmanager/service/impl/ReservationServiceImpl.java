@@ -5,10 +5,13 @@ import com.hotelmanager.exception.exceptions.ReservationNotFoundException;
 import com.hotelmanager.model.dto.RoomTypeAvailability;
 import com.hotelmanager.model.dto.request.ReservationCreationDto;
 import com.hotelmanager.model.dto.request.ReservationRoomDto;
+import com.hotelmanager.model.dto.response.ReservationDetailsDto;
+import com.hotelmanager.model.dto.response.ReservationPaymentDto;
 import com.hotelmanager.model.entity.Reservation;
 import com.hotelmanager.model.entity.ReservationRoomType;
 import com.hotelmanager.model.entity.RoomType;
 import com.hotelmanager.model.entity.User;
+import com.hotelmanager.model.enums.PaymentStatus;
 import com.hotelmanager.model.enums.ReservationStatus;
 import com.hotelmanager.repository.ReservationRepository;
 import com.hotelmanager.service.ReservationService;
@@ -16,6 +19,7 @@ import com.hotelmanager.service.RoomTypeService;
 import com.hotelmanager.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +44,7 @@ public class ReservationServiceImpl implements ReservationService {
     private final ReservationRepository reservationRepository;
     private final UserService userService;
     private final RoomTypeService roomTypeService;
+    private final ModelMapper modelMapper;
 
     @Transactional
     @Override
@@ -79,6 +84,19 @@ public class ReservationServiceImpl implements ReservationService {
     public Reservation getReservationEntity(String reservationId) {
         return this.reservationRepository.findById(UUID.fromString(reservationId))
                 .orElseThrow(() -> new ReservationNotFoundException(RESERVATION_NOT_FOUND));
+    }
+
+    @Transactional
+    @Override
+    public ReservationDetailsDto getReservationById(String id) {
+        Reservation reservation = this.reservationRepository.findById(UUID.fromString(id))
+                .orElseThrow(() -> new ReservationNotFoundException(RESERVATION_NOT_FOUND));
+
+        ReservationDetailsDto detailsDto = this.modelMapper.map(reservation, ReservationDetailsDto.class);
+
+        calculateReservationDetailsCoasts(detailsDto, reservation.getAccommodationCoast());
+
+        return detailsDto;
     }
 
     private void validateCapacity(LocalDate startDate, LocalDate endDate, List<ReservationRoomDto> rooms) {
@@ -132,5 +150,31 @@ public class ReservationServiceImpl implements ReservationService {
                                 .roomsCount(reservationRoomDto.getRoomsCount())
                                 .build())
                 .collect(Collectors.toSet());
+    }
+
+    private void calculateReservationDetailsCoasts(ReservationDetailsDto detailsDto, BigDecimal accommodationCoast) {
+        BigDecimal totalCost = accommodationCoast;
+        BigDecimal paymentsMade = BigDecimal.ZERO;
+        BigDecimal pendingAmount = BigDecimal.ZERO;
+
+        for (ReservationPaymentDto paymentDto : detailsDto.getPayments()) {
+            PaymentStatus status = paymentDto.getStatus();
+
+            if (status == PaymentStatus.ACCEPTED) {
+                paymentsMade = paymentsMade.add(paymentDto.getAmount());
+            }
+
+            if (status == PaymentStatus.PENDING) {
+                pendingAmount = pendingAmount.add(paymentDto.getAmount());
+            }
+
+            if (status == PaymentStatus.ACCEPTED || status == PaymentStatus.PENDING) {
+                totalCost = totalCost.add(paymentDto.getAmount());
+            }
+        }
+
+        detailsDto.setReservationCoast(totalCost);
+        detailsDto.setPayedAmount(paymentsMade);
+        detailsDto.setPendingAmount(pendingAmount);
     }
 }
