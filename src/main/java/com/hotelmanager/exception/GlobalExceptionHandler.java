@@ -23,6 +23,13 @@ import static com.hotelmanager.exception.ExceptionMessages.USER_UNAUTHORIZED;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(PaymentNotFoundException.class)
+    public ResponseEntity<ExceptionErrorResponse> handlePaymentNotFoundException(PaymentNotFoundException ex) {
+        log.error("Payment not found!", ex);
+
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
     @ExceptionHandler(ReservationNotFoundException.class)
     public ResponseEntity<ExceptionErrorResponse> handleReservationNotFoundException(ReservationNotFoundException ex) {
         log.error("Reservation not found! ", ex);
