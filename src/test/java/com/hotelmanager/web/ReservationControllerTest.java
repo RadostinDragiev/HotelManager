@@ -26,10 +26,10 @@ import static com.hotelmanager.exception.ExceptionMessages.NOT_ENOUGH_ROOMS_AVAI
 import static com.hotelmanager.testutil.ErrorResultMatchers.exception;
 import static com.hotelmanager.testutil.ErrorResultMatchers.validationError;
 import static com.hotelmanager.validation.ValidationMessages.*;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @Sql(scripts = "/db/room_types.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @WithMockUser(username = "testUser", roles = {"MANAGER"})
@@ -236,7 +236,11 @@ class ReservationControllerTest extends IntegrationBaseTest {
         this.mockMvc.perform(post("/reservations")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(creationDto)))
-                .andExpectAll(validationError(END_DATE_FIELD, END_DATE_NOT_PAST));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.message").value("Validation error"))
+                .andExpect(jsonPath("$.fieldErrors[*].field", hasItem(END_DATE_FIELD)))
+                .andExpect(jsonPath("$.fieldErrors[*].message", hasItem(END_DATE_NOT_PAST)));
     }
 
     @Test
