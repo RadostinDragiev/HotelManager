@@ -2,6 +2,7 @@ package com.hotelmanager.model.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hotelmanager.validation.annotation.ValidDateRange;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
@@ -37,7 +38,6 @@ public class ReservationCreationDto {
     @NotNull(message = PHONE_NOT_NULL)
     private String phone;
 
-    @NotNull(message = GUESTS_COUNT_NOT_NULL)
     @Positive(message = GUESTS_COUNT_ONLY_POSITIVE)
     private int guestsCount;
 
@@ -51,7 +51,6 @@ public class ReservationCreationDto {
     @FutureOrPresent(message = END_DATE_NOT_PAST)
     private LocalDate endDate;
 
-    @NotNull(message = ROOMS_LIST_NOT_NULL)
     @NotEmpty(message = ROOMS_LIST_NOT_EMPTY)
-    private List<ReservationRoomDto> rooms;
+    private @Valid List<ReservationRoomDto> rooms;
 }

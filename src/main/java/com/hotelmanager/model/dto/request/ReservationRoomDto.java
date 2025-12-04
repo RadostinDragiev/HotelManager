@@ -4,7 +4,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
 
-import static com.hotelmanager.validation.ValidationMessages.*;
+import static com.hotelmanager.validation.ValidationMessages.ROOMS_COUNT_ONLY_POSITIVE;
+import static com.hotelmanager.validation.ValidationMessages.ROOM_TYPE_NOT_NULL;
 
 @Getter
 @Setter
@@ -13,7 +14,6 @@ import static com.hotelmanager.validation.ValidationMessages.*;
 @AllArgsConstructor
 public class ReservationRoomDto {
 
-    @NotNull(message = ROOMS_COUNT_NOT_NULL)
     @Positive(message = ROOMS_COUNT_ONLY_POSITIVE)
     private int roomsCount;
 
