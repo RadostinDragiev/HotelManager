@@ -1,6 +1,7 @@
 package com.hotelmanager.model.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.hotelmanager.model.enums.ReservationPaymentType;
 import com.hotelmanager.validation.annotation.ValidDateRange;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -50,6 +51,9 @@ public class ReservationCreationDto {
     @NotNull(message = END_DATE_NOT_NULL)
     @FutureOrPresent(message = END_DATE_NOT_PAST)
     private LocalDate endDate;
+
+    @NotNull(message = RESERVATION_PAYMENT_TYPE_NOT_NULL)
+    private ReservationPaymentType reservationPaymentType;
 
     @NotEmpty(message = ROOMS_LIST_NOT_EMPTY)
     private @Valid List<ReservationRoomDto> rooms;

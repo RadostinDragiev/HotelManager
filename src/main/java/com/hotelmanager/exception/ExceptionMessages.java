@@ -25,4 +25,6 @@ public final class ExceptionMessages {
     public static final String RESERVATION_NOT_FOUND = "No reservation found by the provided id!";
 
     public static final String PAYMENT_NOT_FOUND = "No payment found by the provided id!";
+
+    public static final String INVALID_RESERVATION_PAYMENT_TYPE = "Unsupported payment type: %s";
 }

@@ -23,9 +23,16 @@ import static com.hotelmanager.exception.ExceptionMessages.USER_UNAUTHORIZED;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(InvalidReservationPaymentTypeException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleInvalidReservationPaymentTypeException(InvalidReservationPaymentTypeException ex) {
+        log.error("Invalid reservation payment type! ", ex);
+
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
     @ExceptionHandler(PaymentNotFoundException.class)
     public ResponseEntity<ExceptionErrorResponse> handlePaymentNotFoundException(PaymentNotFoundException ex) {
-        log.error("Payment not found!", ex);
+        log.error("Payment not found! ", ex);
 
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }

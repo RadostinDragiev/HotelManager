@@ -6,6 +6,7 @@ import com.hotelmanager.model.dto.request.ReservationCreationDto;
 import com.hotelmanager.model.dto.request.ReservationRoomDto;
 import com.hotelmanager.model.dto.request.RoomCreationDto;
 import com.hotelmanager.model.enums.BedType;
+import com.hotelmanager.model.enums.ReservationPaymentType;
 import com.hotelmanager.model.enums.RoomStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -44,6 +45,7 @@ class ReservationControllerTest extends IntegrationBaseTest {
     private static final String GUESTS_COUNT_FIELD = "guestsCount";
     private static final String START_DATE_FIELD = "startDate";
     private static final String END_DATE_FIELD = "endDate";
+    private static final String RESERVATION_PAYMENT_TYPE_FIELD = "reservationPaymentType";
     private static final String ROOMS_FIELD = "rooms";
     private static final String ROOMS_COUNT_FIELD = "roomsCount";
     private static final String ROOMS_TYPE_NAME_FIELD = "roomTypeName";
@@ -257,6 +259,18 @@ class ReservationControllerTest extends IntegrationBaseTest {
     }
 
     @Test
+    @DisplayName("Should return 400 when reservation payment type provided is null")
+    void testCreateReservationWithNullReservationPaymentType() throws Exception {
+        ReservationCreationDto creationDto = buildReservationCreationDto();
+        creationDto.setReservationPaymentType(null);
+
+        this.mockMvc.perform(post("/reservations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(creationDto)))
+                .andExpectAll(validationError(RESERVATION_PAYMENT_TYPE_FIELD, RESERVATION_PAYMENT_TYPE_NOT_NULL));
+    }
+
+    @Test
     @DisplayName("Should return 400 when rooms provided are empty")
     void testCreateReservationWithEmptyRooms() throws Exception {
         ReservationCreationDto creationDto = buildReservationCreationDto();
@@ -324,6 +338,7 @@ class ReservationControllerTest extends IntegrationBaseTest {
                 .email("valid@email.com")
                 .phone("+1234567890")
                 .guestsCount(2)
+                .reservationPaymentType(ReservationPaymentType.FULL_PREPAY)
                 .startDate(LocalDate.now())
                 .endDate(LocalDate.now().plusDays(3))
                 .rooms(List.of(reservationRoomDto))

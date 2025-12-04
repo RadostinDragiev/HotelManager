@@ -1,5 +1,6 @@
 package com.hotelmanager.model.entity;
 
+import com.hotelmanager.model.enums.ReservationPaymentType;
 import com.hotelmanager.model.enums.ReservationStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -42,6 +43,9 @@ public class Reservation extends BaseUUIDEntity {
 
     @Column(name = "accommodation_coast", nullable = false)
     private BigDecimal accommodationCoast;
+
+    @Enumerated(EnumType.STRING)
+    private ReservationPaymentType reservationPaymentType;
 
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;

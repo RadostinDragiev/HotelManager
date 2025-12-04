@@ -1,5 +1,6 @@
 package com.hotelmanager.service.impl;
 
+import com.hotelmanager.event.ReservationCreatedEvent;
 import com.hotelmanager.exception.exceptions.NotEnoughRoomsAvailableException;
 import com.hotelmanager.exception.exceptions.ReservationNotFoundException;
 import com.hotelmanager.model.dto.RoomTypeAvailability;
@@ -13,6 +14,7 @@ import com.hotelmanager.model.entity.ReservationRoomType;
 import com.hotelmanager.model.entity.RoomType;
 import com.hotelmanager.model.entity.User;
 import com.hotelmanager.model.enums.PaymentStatus;
+import com.hotelmanager.model.enums.ReservationPaymentType;
 import com.hotelmanager.model.enums.ReservationStatus;
 import com.hotelmanager.repository.ReservationRepository;
 import com.hotelmanager.service.ReservationService;
@@ -23,6 +25,7 @@ import com.hotelmanager.validation.PageableValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -49,6 +52,7 @@ public class ReservationServiceImpl implements ReservationService {
     private final ReservationRepository reservationRepository;
     private final UserService userService;
     private final RoomTypeService roomTypeService;
+    private final ApplicationEventPublisher eventPublisher;
     private final ModelMapper modelMapper;
 
     @Transactional
@@ -62,6 +66,11 @@ public class ReservationServiceImpl implements ReservationService {
 
         BigDecimal accommodationCoast = calculateAccommodationCost(rooms, startDate, endDate);
 
+        ReservationStatus reservationStatus = ReservationStatus.RESERVATION_REQUEST;
+        if (reservationCreationDto.getReservationPaymentType() == ReservationPaymentType.PAY_AT_PROPERTY) {
+            reservationStatus = ReservationStatus.RESERVATION_CONFIRMED;
+        }
+
         User user = this.userService.getAuthenticationUser();
 
         Reservation reservation = Reservation.builder()
@@ -70,8 +79,9 @@ public class ReservationServiceImpl implements ReservationService {
                 .email(reservationCreationDto.getEmail())
                 .phone(reservationCreationDto.getPhone())
                 .guestsCount(reservationCreationDto.getGuestsCount())
-                .reservationStatus(ReservationStatus.RESERVATION_REQUEST)
+                .reservationStatus(reservationStatus)
                 .accommodationCoast(accommodationCoast)
+                .reservationPaymentType(reservationCreationDto.getReservationPaymentType())
                 .startDate(startDate)
                 .endDate(endDate)
                 .createdBy(user)
@@ -81,6 +91,8 @@ public class ReservationServiceImpl implements ReservationService {
         reservation.setRoomTypes(reservationRoomTypes);
 
         Reservation createdReservation = this.reservationRepository.save(reservation);
+
+        this.eventPublisher.publishEvent(new ReservationCreatedEvent(reservation.getUuid().toString(), reservation.getReservationPaymentType(), reservation.getAccommodationCoast()));
 
         return createdReservation.getUuid();
     }
@@ -138,10 +150,6 @@ public class ReservationServiceImpl implements ReservationService {
 
         long nights = ChronoUnit.DAYS.between(startDate, endDate);
 
-        // TODO: Add discount for client with fully prepaid stay
-//        BigDecimal percent = BigDecimal.valueOf(-5);
-//        BigDecimal factor = BigDecimal.ONE.add(percent.divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP));
-
         BigDecimal total = BigDecimal.ZERO;
 
         for (ReservationRoomDto reservationRoomDto : rooms) {
@@ -154,7 +162,6 @@ public class ReservationServiceImpl implements ReservationService {
             BigDecimal priceForType = basePrice
                     .multiply(BigDecimal.valueOf(nights))
                     .multiply(roomsCount);
-//                    .multiply(factor);
 
             total = total.add(priceForType);
         }
