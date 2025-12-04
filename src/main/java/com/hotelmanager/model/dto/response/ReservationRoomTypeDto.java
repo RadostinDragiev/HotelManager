@@ -7,8 +7,8 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RoleDto {
+public class ReservationRoomTypeDto {
 
-    private String uuid;
-    private String name;
+    private String roomTypeName;
+    private int roomsCount;
 }

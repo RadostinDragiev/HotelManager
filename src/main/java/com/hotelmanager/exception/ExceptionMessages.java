@@ -19,4 +19,12 @@ public final class ExceptionMessages {
 
     public static final String OLD_PASSWORD_DOES_NOT_MATCH = "Provided old password is invalid!";
     public static final String NEW_PASSWORDS_DOES_NOT_MATCH = "New password and confirm new password should match!";
+
+    public static final String NOT_ENOUGH_ROOMS_AVAILABLE = "Not enough rooms of type %s available!";
+
+    public static final String RESERVATION_NOT_FOUND = "No reservation found by the provided id!";
+
+    public static final String PAYMENT_NOT_FOUND = "No payment found by the provided id!";
+
+    public static final String INVALID_RESERVATION_PAYMENT_TYPE = "Unsupported payment type: %s";
 }
