@@ -67,7 +67,7 @@ public record HotelUserDetails(User user) implements org.springframework.securit
 
     private Set<RoleDto> mapToRoleDto(Set<Role> roles) {
         return roles.stream()
-                .map(role -> new RoleDto(role.getName()))
+                .map(role -> new RoleDto(role.getUuid().toString(), role.getName()))
                 .collect(Collectors.toSet());
     }
 }

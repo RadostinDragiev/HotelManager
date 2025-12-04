@@ -23,6 +23,34 @@ import static com.hotelmanager.exception.ExceptionMessages.USER_UNAUTHORIZED;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(InvalidReservationPaymentTypeException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleInvalidReservationPaymentTypeException(InvalidReservationPaymentTypeException ex) {
+        log.error("Invalid reservation payment type! ", ex);
+
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(PaymentNotFoundException.class)
+    public ResponseEntity<ExceptionErrorResponse> handlePaymentNotFoundException(PaymentNotFoundException ex) {
+        log.error("Payment not found! ", ex);
+
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(ReservationNotFoundException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleReservationNotFoundException(ReservationNotFoundException ex) {
+        log.error("Reservation not found! ", ex);
+
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(NotEnoughRoomsAvailableException.class)
+    public ResponseEntity<ExceptionErrorResponse> handleNotEnoughRoomsAvailableException(NotEnoughRoomsAvailableException ex) {
+        log.error("Not enough rooms available! ", ex);
+
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
     @ExceptionHandler(RoomTypeAlreadyExistsException.class)
     public ResponseEntity<ExceptionErrorResponse> handleRoomTypeAlreadyExistsException(RoomTypeAlreadyExistsException ex) {
         log.error("Room type already exists! ", ex);

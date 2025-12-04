@@ -56,7 +56,7 @@ public class RoomController {
                                                          @RequestParam(defaultValue = "0") int page,
                                                          @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<RoomPageResponseDto> result = roomService.getAllRooms(roomType, roomStatus, pageable);
+        Page<RoomPageResponseDto> result = this.roomService.getAllRooms(roomType, roomStatus, pageable);
 
         return new PageResponse<>(
                 result.getContent(),

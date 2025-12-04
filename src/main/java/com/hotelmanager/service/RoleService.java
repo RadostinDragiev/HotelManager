@@ -1,5 +1,6 @@
 package com.hotelmanager.service;
 
+import com.hotelmanager.model.dto.response.RoleDto;
 import com.hotelmanager.model.entity.Role;
 
 import java.util.Collection;
@@ -9,4 +10,6 @@ import java.util.UUID;
 public interface RoleService {
 
     Set<Role> getRolesByIds(Collection<UUID> ids);
+
+    Set<RoleDto> getAllRoles();
 }
