@@ -1,6 +1,7 @@
 package com.hotelmanager.service.impl;
 
 import com.hotelmanager.exception.exceptions.NotEnoughRoomsAvailableException;
+import com.hotelmanager.exception.exceptions.ReservationNotFoundException;
 import com.hotelmanager.model.dto.RoomTypeAvailability;
 import com.hotelmanager.model.dto.request.ReservationCreationDto;
 import com.hotelmanager.model.dto.request.ReservationRoomDto;
@@ -29,6 +30,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.hotelmanager.exception.ExceptionMessages.NOT_ENOUGH_ROOMS_AVAILABLE;
+import static com.hotelmanager.exception.ExceptionMessages.RESERVATION_NOT_FOUND;
 
 @Slf4j
 @Service
@@ -71,6 +73,12 @@ public class ReservationServiceImpl implements ReservationService {
         Reservation createdReservation = this.reservationRepository.save(reservation);
 
         return createdReservation.getUuid();
+    }
+
+    @Override
+    public Reservation getReservationEntity(String reservationId) {
+        return this.reservationRepository.findById(UUID.fromString(reservationId))
+                .orElseThrow(() -> new ReservationNotFoundException(RESERVATION_NOT_FOUND));
     }
 
     private void validateCapacity(LocalDate startDate, LocalDate endDate, List<ReservationRoomDto> rooms) {
